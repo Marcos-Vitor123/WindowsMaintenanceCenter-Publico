@@ -10,6 +10,7 @@
         Height="550" Width="800"
         MinHeight="500" MinWidth="700"
         WindowStartupLocation="CenterScreen"
+        Icon="pack://application:,,,/Assets/ico.ico"
         Background="#f0f0f0">
     
     <Grid>
