@@ -82,9 +82,14 @@ public class HistoryService : ILogger
                 var list = JsonSerializer.Deserialize<List<HistoryEntry>>(json);
                 if (list != null)
                 {
+                    foreach (var entry in list)
+                    {
+                        if (entry.Id == 0)
+                            entry.Id = _nextId++;
+                        else
+                            _nextId = Math.Max(_nextId, entry.Id + 1);
+                    }
                     _entries.AddRange(list);
-                    if (_entries.Count > 0)
-                        _nextId = _entries.Max(e => e.Id) + 1;
                 }
             }
             catch { }
