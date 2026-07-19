@@ -121,8 +121,22 @@
                              Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibilityConverter}}"
                              VerticalAlignment="Center" Margin="20,0"/>
                 <TextBlock Grid.Column="2" Text="{Binding ProgressValue, StringFormat='{}{0}%'}" 
-                           VerticalAlignment="Center" FontSize="11" Foreground="#7f8c8d" Margin="10,0,0,0"
-                           Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                           VerticalAlignment="Center" FontSize="11" Foreground="#7f8c8d" Margin="10,0,0,0">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding IsRunning}" Value="True"/>
+                                        <Condition Binding="{Binding IsIndeterminate}" Value="False"/>
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </MultiDataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
             </Grid>
         </Border>
     </Grid>

@@ -144,7 +144,14 @@ public class MainViewModel : ViewModelBase
         CurrentViewModel = page switch
         {
             PageType.Home => new HomeViewModel(_diagnosticService, _configService, _historyService, this),
-            PageType.Maintenance => new MaintenanceViewModel(_maintenanceEngine, _repairEngine, _deepCleanEngine, _notificationService, _soundService, _configService, _historyService),
+            PageType.Maintenance => new MaintenanceViewModel(_maintenanceEngine, _repairEngine, _deepCleanEngine, _notificationService, _soundService, _configService, _historyService,
+                (text, progress, running, indeterminate) =>
+                {
+                    StatusText = text;
+                    ProgressValue = progress;
+                    IsRunning = running;
+                    IsIndeterminate = indeterminate;
+                }),
             PageType.Diagnostics => new DiagnosticsViewModel(_diagnosticService),
             PageType.Startup => new StartupViewModel(_startupManager),
             PageType.Settings => new SettingsViewModel(_configService, _notificationService),
