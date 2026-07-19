@@ -87,7 +87,7 @@ O projeto conta com **10 serviços** especializados que executam as operações 
 | Requisito | Detalhe |
 |-----------|---------|
 | **Sistema Operacional** | Windows 10 ou Windows 11 |
-| **Runtime** | .NET 10.0 Runtime |
+| **Runtime** | [.NET 10.0 Runtime](https://dotnet.microsoft.com/download/dotnet/10.0) |
 | **Privilégios** | Executar como **Administrador** (obrigatório para DISM, SFC, CHKDSK) |
 | **Disco** | ~50 MB de espaço livre para instalação |
 

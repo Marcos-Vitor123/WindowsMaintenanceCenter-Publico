@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using WindowsMaintenanceCenter.Services;
@@ -12,6 +14,12 @@ namespace WindowsMaintenanceCenter
 
         protected override void OnStartup(StartupEventArgs e)
         {
+            if (!CheckRuntime())
+            {
+                Shutdown();
+                return;
+            }
+
             var services = new ServiceCollection();
 
             // Services
@@ -71,6 +79,32 @@ namespace WindowsMaintenanceCenter
             var automation = Services?.GetService<AutomationService>();
             automation?.Stop();
             base.OnExit(e);
+        }
+
+        private static bool CheckRuntime()
+        {
+            var description = RuntimeInformation.FrameworkDescription;
+            if (description.Contains(".NET 10", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            var result = MessageBox.Show(
+                $"Este programa requer o .NET 10.0 Runtime.\n\n" +
+                $"Versão detectada: {description}\n\n" +
+                $"Deseja abrir a página de download do .NET 10.0?",
+                "Runtime Incompatível",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = "https://dotnet.microsoft.com/download/dotnet/10.0",
+                    UseShellExecute = true
+                });
+            }
+
+            return false;
         }
     }
 }

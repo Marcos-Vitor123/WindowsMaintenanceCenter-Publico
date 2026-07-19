@@ -18,12 +18,14 @@ public class HistoryViewModel : ViewModelBase
 
     public ICommand RefreshCommand { get; }
     public ICommand ClearCommand { get; }
+    public ICommand DeleteEntryCommand { get; }
 
     public HistoryViewModel(HistoryService historyService)
     {
         _historyService = historyService;
         RefreshCommand = new RelayCommand(LoadEntries);
         ClearCommand = new RelayCommand(Clear);
+        DeleteEntryCommand = new RelayCommand<HistoryEntry>(DeleteEntry);
         LoadEntries();
     }
 
@@ -32,6 +34,13 @@ public class HistoryViewModel : ViewModelBase
         Entries.Clear();
         foreach (var entry in _historyService.Entries)
             Entries.Add(entry);
+    }
+
+    private void DeleteEntry(HistoryEntry? entry)
+    {
+        if (entry == null) return;
+        _historyService.DeleteEntry(entry.Id);
+        Entries.Remove(entry);
     }
 
     private void Clear()

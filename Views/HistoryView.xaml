@@ -70,6 +70,7 @@
                         <ColumnDefinition Width="120"/>
                         <ColumnDefinition Width="120"/>
                         <ColumnDefinition Width="100"/>
+                        <ColumnDefinition Width="40"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Grid.Column="0" Text="DATA/HORA" FontSize="11" FontWeight="Bold" Foreground="#7f8c8d" Padding="15,10"/>
                     <TextBlock Grid.Column="1" Text="FUNÇÃO EXECUTADA" FontSize="11" FontWeight="Bold" Foreground="#7f8c8d" Padding="15,10"/>
@@ -91,6 +92,7 @@
                                             <ColumnDefinition Width="120"/>
                                             <ColumnDefinition Width="120"/>
                                             <ColumnDefinition Width="100"/>
+                                            <ColumnDefinition Width="40"/>
                                         </Grid.ColumnDefinitions>
                                         
                                         <TextBlock Grid.Column="0" Text="{Binding Date, StringFormat='{}{0:dd/MM/yyyy HH:mm:ss}'}" 
@@ -106,6 +108,26 @@
                                             <TextBlock Text="{Binding Success, Converter={StaticResource BoolToResultTextConverter}}" 
                                                        FontSize="12" FontWeight="Medium" Foreground="{Binding Success, Converter={StaticResource BoolToResultColorConverter}}" Margin="5,0,0,0"/>
                                         </StackPanel>
+                                        <Button Grid.Column="5" Content="✕" 
+                                                Command="{Binding DataContext.DeleteEntryCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding}"
+                                                FontSize="12" Foreground="#e74c3c" Background="Transparent"
+                                                BorderThickness="0" Padding="5,2" Cursor="Hand"
+                                                HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                ToolTip="Excluir este registro">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border x:Name="BtnBorder" Background="{TemplateBinding Background}" CornerRadius="4" Padding="2">
+                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="BtnBorder" Property="Background" Value="#fadbd8"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Button.Template>
+                                        </Button>
                                     </Grid>
                                 </Border>
                             </DataTemplate>

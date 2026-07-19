@@ -2,6 +2,7 @@ namespace WindowsMaintenanceCenter.Models;
 
 public class HistoryEntry
 {
+    public int Id { get; set; }
     public DateTime Date { get; set; }
     public string FunctionName { get; set; } = string.Empty;
     public string Command { get; set; } = string.Empty;

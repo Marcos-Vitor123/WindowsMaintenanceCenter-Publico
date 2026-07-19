@@ -9,6 +9,7 @@ public class HistoryService : ILogger
     private readonly string _logPath;
     private readonly List<HistoryEntry> _entries = new();
     private readonly object _lock = new();
+    private int _nextId = 1;
 
     public IReadOnlyList<HistoryEntry> Entries => _entries.AsReadOnly();
 
@@ -25,9 +26,22 @@ public class HistoryService : ILogger
     {
         lock (_lock)
         {
+            entry.Id = _nextId++;
             _entries.Insert(0, entry);
             if (_entries.Count > 1000) _entries.RemoveAt(_entries.Count - 1);
             Save();
+        }
+    }
+
+    public bool DeleteEntry(int id)
+    {
+        lock (_lock)
+        {
+            var entry = _entries.FirstOrDefault(e => e.Id == id);
+            if (entry == null) return false;
+            _entries.Remove(entry);
+            Save();
+            return true;
         }
     }
 
@@ -43,7 +57,8 @@ public class HistoryService : ILogger
     { 
         lock (_lock) 
         { 
-            _entries.Clear(); 
+            _entries.Clear();
+            _nextId = 1;
             Save(); 
         } 
     }
@@ -65,7 +80,12 @@ public class HistoryService : ILogger
             {
                 var json = File.ReadAllText(_logPath);
                 var list = JsonSerializer.Deserialize<List<HistoryEntry>>(json);
-                if (list != null) _entries.AddRange(list);
+                if (list != null)
+                {
+                    _entries.AddRange(list);
+                    if (_entries.Count > 0)
+                        _nextId = _entries.Max(e => e.Id) + 1;
+                }
             }
             catch { }
         }
