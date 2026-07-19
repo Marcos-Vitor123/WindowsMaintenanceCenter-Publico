@@ -15,8 +15,8 @@ namespace WindowsMaintenanceCenter
             var services = new ServiceCollection();
 
             // Services
-            services.AddSingleton<ILogger, ConfigService>();
             services.AddSingleton<ConfigService>();
+            services.AddSingleton<ILogger>(sp => sp.GetRequiredService<ConfigService>());
             services.AddSingleton<HistoryService>();
             services.AddSingleton<DiagnosticService>(sp => new DiagnosticService(sp.GetRequiredService<HistoryService>()));
             services.AddSingleton<NotificationService>();
@@ -44,6 +44,20 @@ namespace WindowsMaintenanceCenter
             var mainWindow = new Views.MainWindow();
             mainWindow.DataContext = Services.GetRequiredService<MainViewModel>();
             mainWindow.SetNotificationService(Services.GetRequiredService<NotificationService>());
+
+            var config = Services.GetRequiredService<ConfigService>().GetConfig();
+
+            if (config.OpenCentered)
+            {
+                mainWindow.WindowStartupLocation = System.Windows.WindowStartupLocation.CenterScreen;
+            }
+            else
+            {
+                mainWindow.WindowStartupLocation = System.Windows.WindowStartupLocation.Manual;
+                mainWindow.Left = 100;
+                mainWindow.Top = 100;
+            }
+
             mainWindow.Show();
 
             logger.Info("MainWindow exibida com sucesso");
