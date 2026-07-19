@@ -39,6 +39,7 @@ namespace WindowsMaintenanceCenter
 
             var mainWindow = new Views.MainWindow();
             mainWindow.DataContext = Services.GetRequiredService<MainViewModel>();
+            mainWindow.SetNotificationService(Services.GetRequiredService<NotificationService>());
             mainWindow.Show();
         }
 

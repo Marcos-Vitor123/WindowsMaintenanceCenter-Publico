@@ -175,11 +175,13 @@ public class MaintenanceViewModel : ViewModelBase
                     if (exitCode == 0 && exitCode2 == 0)
                     {
                         UpdateStatus("Otimização Diária concluída com sucesso!", 100, false, false);
+                        _soundService.PlaySuccess();
                         _notificationService.ShowSuccess("Otimização Diária", "Concluída com sucesso!");
                     }
                     else
                     {
                         UpdateStatus($"Otimização Diária concluída com avisos (código: {exitCode}, {exitCode2})", 100, false, false);
+                        _soundService.PlayWarning();
                         _notificationService.ShowWarning("Otimização Diária", $"Concluída com avisos (código: {exitCode}, {exitCode2})");
                     }
                     break;
@@ -190,11 +192,13 @@ public class MaintenanceViewModel : ViewModelBase
                     if (exitCode == 0)
                     {
                         UpdateStatus("Reparação do Sistema concluída com sucesso!", 100, false, false);
+                        _soundService.PlaySuccess();
                         _notificationService.ShowSuccess("Reparação do Sistema", "Concluída com sucesso!");
                     }
                     else
                     {
                         UpdateStatus($"Reparação do Sistema concluída com avisos (código: {exitCode})", 100, false, false);
+                        _soundService.PlayWarning();
                         _notificationService.ShowWarning("Reparação do Sistema", $"Concluída com avisos (código: {exitCode})");
                     }
                     break;
@@ -211,11 +215,13 @@ public class MaintenanceViewModel : ViewModelBase
                     if (exitCode == 0)
                     {
                         UpdateStatus("Limpeza Leve concluída com sucesso!", 100, false, false);
+                        _soundService.PlaySuccess();
                         _notificationService.ShowSuccess("Limpeza Leve", "Concluída com sucesso!");
                     }
                     else
                     {
                         UpdateStatus($"Limpeza Leve concluída com avisos (código: {exitCode})", 100, false, false);
+                        _soundService.PlayWarning();
                         _notificationService.ShowWarning("Limpeza Leve", $"Concluída com avisos (código: {exitCode})");
                     }
                     break;
@@ -226,11 +232,13 @@ public class MaintenanceViewModel : ViewModelBase
                     if (exitCode == 0)
                     {
                         UpdateStatus("Limpeza Profunda concluída com sucesso!", 100, false, false);
+                        _soundService.PlaySuccess();
                         _notificationService.ShowSuccess("Limpeza Profunda", "Concluída com sucesso!");
                     }
                     else
                     {
                         UpdateStatus($"Limpeza Profunda concluída com avisos (código: {exitCode})", 100, false, false);
+                        _soundService.PlayWarning();
                         _notificationService.ShowWarning("Limpeza Profunda", $"Concluída com avisos (código: {exitCode})");
                     }
                     break;
@@ -249,11 +257,13 @@ public class MaintenanceViewModel : ViewModelBase
                             RequiresRestart = false
                         }, progress);
                         UpdateStatus("Reparação + Limpeza Leve concluída com sucesso!", 100, false, false);
+                        _soundService.PlaySuccess();
                         _notificationService.ShowSuccess("Reparação + Limpeza Leve", "Concluída com sucesso!");
                     }
                     else
                     {
                         UpdateStatus($"Reparação concluída com avisos (código: {exitCode})", 100, false, false);
+                        _soundService.PlayWarning();
                         _notificationService.ShowWarning("Reparação + Limpeza Leve", $"Reparação concluída com avisos (código: {exitCode})");
                     }
                     break;
@@ -274,11 +284,13 @@ public class MaintenanceViewModel : ViewModelBase
                     if (exitCode == 0)
                     {
                         UpdateStatus("Reparação Completa concluída com sucesso!", 100, false, false);
+                        _soundService.PlaySuccess();
                         _notificationService.ShowSuccess("Reparação Completa", "Concluída com sucesso!");
                     }
                     else
                     {
                         UpdateStatus($"Reparação Completa concluída com avisos (código: {exitCode})", 100, false, false);
+                        _soundService.PlayWarning();
                         _notificationService.ShowWarning("Reparação Completa", $"Concluída com avisos (código: {exitCode})");
                     }
                     break;
@@ -287,6 +299,7 @@ public class MaintenanceViewModel : ViewModelBase
         catch (Exception ex)
         {
             UpdateStatus($"Erro: {ex.Message}", 0, false, false);
+            _soundService.PlayError();
             _notificationService.ShowError("Erro", $"Ocorreu um erro durante a execução:\n{ex.Message}");
         }
         finally
