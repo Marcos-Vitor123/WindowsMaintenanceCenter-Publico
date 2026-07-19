@@ -103,8 +103,8 @@ public class DeepCleanEngine
             CreateNoWindow = true,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
-            StandardOutputEncoding = System.Text.Encoding.GetEncoding(850),
-            StandardErrorEncoding = System.Text.Encoding.GetEncoding(850)
+            StandardOutputEncoding = System.Text.Encoding.UTF8,
+            StandardErrorEncoding = System.Text.Encoding.UTF8
         };
 
         using var process = new Process { StartInfo = startInfo };
