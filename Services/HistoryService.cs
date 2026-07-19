@@ -54,7 +54,7 @@ public class HistoryService : ILogger
         var logDir = Path.Combine(baseDir, "Logs");
         Directory.CreateDirectory(logDir);
         var file = Path.Combine(logDir, $"log_{DateTime.Now:yyyyMMdd}.txt");
-        File.AppendAllText(file, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {message}\n");
+        File.AppendAllText(file, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {message}\n", System.Text.Encoding.UTF8);
     }
 
     private void Load()
@@ -77,7 +77,7 @@ public class HistoryService : ILogger
         {
             var json = JsonSerializer.Serialize(_entries, new JsonSerializerOptions { WriteIndented = true });
             var tempPath = _logPath + ".tmp";
-            File.WriteAllText(tempPath, json);
+            File.WriteAllText(tempPath, json, System.Text.Encoding.UTF8);
             File.Move(tempPath, _logPath, overwrite: true);
         }
         catch (Exception ex)

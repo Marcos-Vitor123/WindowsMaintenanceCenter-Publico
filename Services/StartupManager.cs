@@ -106,11 +106,14 @@ public class StartupManager
 
     private string EstimateImpact(string command)
     {
-        // Simplified heuristic
-        var lower = command.ToLower();
-        if (lower.Contains("steam") || lower.Contains("discord") || lower.Contains("epic") || lower.Contains("battle.net"))
+        if (command.Contains("steam", StringComparison.OrdinalIgnoreCase) ||
+            command.Contains("discord", StringComparison.OrdinalIgnoreCase) ||
+            command.Contains("epic", StringComparison.OrdinalIgnoreCase) ||
+            command.Contains("battle.net", StringComparison.OrdinalIgnoreCase))
             return "Alto";
-        if (lower.Contains("adobe") || lower.Contains("nvidia") || lower.Contains("intel"))
+        if (command.Contains("adobe", StringComparison.OrdinalIgnoreCase) ||
+            command.Contains("nvidia", StringComparison.OrdinalIgnoreCase) ||
+            command.Contains("intel", StringComparison.OrdinalIgnoreCase))
             return "Médio";
         return "Baixo";
     }

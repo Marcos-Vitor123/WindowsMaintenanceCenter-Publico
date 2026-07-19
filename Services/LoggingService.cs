@@ -34,7 +34,7 @@ public class LoggingService
 
             lock (_lock)
             {
-                File.AppendAllText(file, line);
+                File.AppendAllText(file, line, System.Text.Encoding.UTF8);
             }
 
             Debug.WriteLine(line.TrimEnd());
