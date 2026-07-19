@@ -1,0 +1,65 @@
+## .NET / Visual Studio
+
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+## NuGet
+*.nupkg
+*.snupkg
+.nuget/
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+
+## Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.userprefs
+
+## Rider
+.idea/
+*.sln.iml
+
+## Build results
+[Dd]ebugPublic/
+[Rr]eleases/
+build/
+Build/
+
+## Publish output
+publish/
+
+## NuGet v3
+*.nuget.props
+*.nuget.targets
+
+## Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+## macOS
+.DS_Store
+
+## Files generaed by project (runtime data - should not be committed)
+Config/configuracoes.json
+Logs/historico.json
+Logs/log_*.txt
+
+## Keep directories
+!Config/.gitkeep
+!Logs/.gitkeep

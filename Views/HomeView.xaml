@@ -1,0 +1,109 @@
+<UserControl x:Class="WindowsMaintenanceCenter.Views.HomeView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             d:DesignHeight="500" d:DesignWidth="560"
+             Background="#f0f0f0">
+    
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="30,20">
+        <StackPanel>
+            <!-- Header -->
+            <TextBlock Text="Windows Maintenance Center" FontSize="28" FontWeight="Bold" Foreground="#2c3e50" Margin="0,0,0,5"/>
+            <TextBlock Text="Sua central de manutenção e otimização do Windows" FontSize="14" Foreground="#7f8c8d" Margin="0,0,0,30"/>
+
+            <!-- Status Card -->
+            <Border Background="White" CornerRadius="12" Padding="25" Margin="0,0,0,20" BorderBrush="#e0e0e0" BorderThickness="1">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <Border Grid.Column="0" Width="80" Height="80" CornerRadius="40" 
+                            Background="{Binding SystemInfo.StatusColor, FallbackValue=#27ae60}" VerticalAlignment="Top">
+                        <TextBlock Text="✓" FontSize="36" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    
+                    <StackPanel Grid.Column="1" Margin="20,0,0,0">
+                        <TextBlock Text="Status do Sistema" FontSize="18" FontWeight="Bold" Foreground="#2c3e50"/>
+                        <TextBlock Text="{Binding SystemInfo.StatusText, FallbackValue='Sistema saudável'}" 
+                                   FontSize="18" FontWeight="SemiBold" 
+                                   Foreground="{Binding SystemInfo.StatusColor, FallbackValue=#27ae60}" Margin="0,5,0,15"/>
+                        
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Última Otimização" FontSize="11" Foreground="#7f8c8d" TextWrapping="Wrap"/>
+                                <TextBlock Text="{Binding SystemInfo.LastOptimization, StringFormat='{}{0:dd/MM/yyyy HH:mm}', FallbackValue='Nunca'}" 
+                                           FontSize="14" FontWeight="Medium" Foreground="#2c3e50"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="Espaço Liberado Total" FontSize="11" Foreground="#7f8c8d" TextWrapping="Wrap"/>
+                                <TextBlock Text="{Binding SystemInfo.SpaceFreedTotalBytes, Converter={StaticResource BytesToStringConverter}, FallbackValue='0 B'}" 
+                                           FontSize="14" FontWeight="Medium" Foreground="#2c3e50"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Próxima Manutenção" FontSize="11" Foreground="#7f8c8d" TextWrapping="Wrap"/>
+                                <TextBlock Text="{Binding SystemInfo.LastOptimization, Converter={StaticResource NextMaintenanceConverter}, FallbackValue='Hoje'}" 
+                                           FontSize="14" FontWeight="Medium" Foreground="#2c3e50"/>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Quick Action Button -->
+            <Button Command="{Binding RunOptimizationCommand}" 
+                    Background="#3498db" Foreground="White" BorderThickness="0" Padding="0,15"
+                    FontSize="16" FontWeight="Bold" Cursor="Hand" Margin="0,0,0,30">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="BtnBorder" Background="{TemplateBinding Background}" CornerRadius="10">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <TextBlock Text="⭐ " FontSize="18"/>
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="BtnBorder" Property="Background" Value="#2980b9"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Button.Template>
+                <TextBlock Text="Executar Otimização Diária"/>
+            </Button>
+
+            <!-- Recommendations -->
+            <Border Background="White" CornerRadius="12" Padding="25" BorderBrush="#e0e0e0" BorderThickness="1">
+                <StackPanel>
+                    <TextBlock Text="💡 Recomendações" FontSize="18" FontWeight="Bold" Foreground="#2c3e50" Margin="0,0,0,15"/>
+                    <ItemsControl ItemsSource="{Binding Recommendations}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="#fff3e0" CornerRadius="8" Padding="15" Margin="0,0,0,8">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="⚠ " FontSize="16" VerticalAlignment="Top"/>
+                                        <TextBlock Text="{Binding}" FontSize="13" Foreground="#e67e22" TextWrapping="Wrap" Margin="8,0,0,0" MaxWidth="450"/>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    
+                    <!-- Placeholder if empty -->
+                    <TextBlock Text="Tudo em ordem! Nenhuma recomendação no momento." 
+                               FontSize="13" Foreground="#27ae60" FontStyle="Italic"
+                               Visibility="{Binding Recommendations.Count, Converter={StaticResource CountToVisibilityConverter}}"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -1,0 +1,129 @@
+using System.Diagnostics;
+using System.IO;
+using System.Text;
+using WindowsMaintenanceCenter.Models;
+
+namespace WindowsMaintenanceCenter.Services;
+
+public class MaintenanceEngine
+{
+    private readonly HistoryService _historyService;
+    private readonly SoundService _soundService;
+
+    public event Action<string, int>? TaskProgress; // status, progress
+    public event Action<MaintenanceTask, int>? TaskCompleted; // task, exitCode
+    public event Action<string>? TaskError;
+
+    public MaintenanceEngine(HistoryService historyService, SoundService soundService)
+    {
+        _historyService = historyService;
+        _soundService = soundService;
+    }
+
+    public async Task<int> RunTaskAsync(MaintenanceTask task, IProgress<string>? progress = null)
+    {
+        var startTime = DateTime.Now;
+        var entry = new HistoryEntry
+        {
+            Date = startTime,
+            FunctionName = task.Name,
+            Command = task.Command
+        };
+
+        try
+        {
+            progress?.Report($"Iniciando: {task.Name}");
+            TaskProgress?.Invoke($"Executando: {task.Name}", 0);
+
+            var exitCode = await ExecuteCommandAsync(task.Command, progress);
+
+            entry.Success = exitCode == 0;
+            entry.ExitCode = exitCode;
+            entry.Duration = DateTime.Now - startTime;
+            entry.SpaceFreedBytes = EstimateSpaceFreed(task.Id, exitCode);
+
+            _historyService.AddEntry(entry);
+            TaskCompleted?.Invoke(task, exitCode);
+
+            if (exitCode == 0)
+            {
+                _soundService.PlayComplete();
+                progress?.Report($"✅ {task.Name} concluído com sucesso!");
+            }
+            else
+            {
+                _soundService.PlayWarning();
+                progress?.Report($"⚠️ {task.Name} concluído com avisos (código: {exitCode})");
+            }
+
+            return exitCode;
+        }
+        catch (Exception ex)
+        {
+            entry.Success = false;
+            entry.ErrorMessage = ex.Message;
+            entry.Duration = DateTime.Now - startTime;
+            _historyService.AddEntry(entry);
+            TaskError?.Invoke(ex.Message);
+            _soundService.PlayError();
+            throw;
+        }
+    }
+
+    private async Task<int> ExecuteCommandAsync(string command, IProgress<string>? progress)
+    {
+        var tcs = new TaskCompletionSource<int>();
+
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = "cmd.exe",
+            Arguments = $"/c {command}",
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            StandardOutputEncoding = System.Text.Encoding.GetEncoding(850),
+            StandardErrorEncoding = System.Text.Encoding.GetEncoding(850)
+        };
+
+        using var process = new Process { StartInfo = startInfo, EnableRaisingEvents = true };
+
+        var outputBuilder = new System.Text.StringBuilder();
+        var errorBuilder = new System.Text.StringBuilder();
+
+        process.OutputDataReceived += (s, e) =>
+        {
+            if (e.Data != null)
+            {
+                outputBuilder.AppendLine(e.Data);
+                progress?.Report(e.Data);
+            }
+        };
+
+        process.ErrorDataReceived += (s, e) =>
+        {
+            if (e.Data != null)
+                errorBuilder.AppendLine(e.Data);
+        };
+
+        process.Exited += (s, e) => tcs.SetResult(process.ExitCode);
+
+        process.Start();
+        process.BeginOutputReadLine();
+        process.BeginErrorReadLine();
+
+        return await tcs.Task;
+    }
+
+    private long EstimateSpaceFreed(string taskId, int exitCode)
+    {
+        if (exitCode != 0) return 0;
+        return taskId switch
+        {
+            "TempFiles" => 500 * 1024 * 1024,
+            "DiskCleanup" => 1024 * 1024 * 1024,
+            "Prefetch" => 200 * 1024 * 1024,
+            _ => 0
+        };
+    }
+}

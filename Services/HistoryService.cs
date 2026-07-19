@@ -1,0 +1,83 @@
+using System.IO;
+using System.Text.Json;
+using WindowsMaintenanceCenter.Models;
+
+namespace WindowsMaintenanceCenter.Services;
+
+public class HistoryService : ILogger
+{
+    private readonly string _logPath;
+    private readonly List<HistoryEntry> _entries = new();
+    private readonly object _lock = new();
+
+    public IReadOnlyList<HistoryEntry> Entries => _entries.AsReadOnly();
+
+    public HistoryService()
+    {
+        var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+        var logDir = Path.Combine(baseDir, "Logs");
+        Directory.CreateDirectory(logDir);
+        _logPath = Path.Combine(logDir, "historico.json");
+        Load();
+    }
+
+    public void AddEntry(HistoryEntry entry)
+    {
+        lock (_lock)
+        {
+            _entries.Insert(0, entry);
+            if (_entries.Count > 1000) _entries.RemoveAt(_entries.Count - 1);
+            Save();
+        }
+    }
+
+    public IReadOnlyList<HistoryEntry> GetHistory()
+    {
+        lock (_lock)
+        {
+            return _entries.ToList();
+        }
+    }
+
+    public void Clear() 
+    { 
+        lock (_lock) 
+        { 
+            _entries.Clear(); 
+            Save(); 
+        } 
+    }
+
+    public void Log(string message)
+    {
+        var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+        var logDir = Path.Combine(baseDir, "Logs");
+        Directory.CreateDirectory(logDir);
+        var file = Path.Combine(logDir, $"log_{DateTime.Now:yyyyMMdd}.txt");
+        File.AppendAllText(file, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {message}\n");
+    }
+
+    private void Load()
+    {
+        if (File.Exists(_logPath))
+        {
+            try
+            {
+                var json = File.ReadAllText(_logPath);
+                var list = JsonSerializer.Deserialize<List<HistoryEntry>>(json);
+                if (list != null) _entries.AddRange(list);
+            }
+            catch { }
+        }
+    }
+
+    private void Save()
+    {
+        try
+        {
+            var json = JsonSerializer.Serialize(_entries, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(_logPath, json);
+        }
+        catch { }
+    }
+}

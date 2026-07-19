@@ -1,0 +1,85 @@
+<UserControl x:Class="WindowsMaintenanceCenter.Views.DiagnosticsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             d:DesignHeight="500" d:DesignWidth="560"
+             Background="#f0f0f0">
+    
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="30,20">
+        <StackPanel>
+            <TextBlock Text="Diagnóstico do Sistema" FontSize="28" FontWeight="Bold" Foreground="#2c3e50" Margin="0,0,0,5"/>
+            <TextBlock Text="Informações detalhadas sobre o estado do seu computador" FontSize="14" Foreground="#7f8c8d" Margin="0,0,0,30"/>
+
+            <!-- System Info Grid -->
+            <Border Background="White" CornerRadius="12" Padding="25" Margin="0,0,0,20" BorderBrush="#e0e0e0" BorderThickness="1">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Grid.Column="0">
+                        <TextBlock Text="VERSÃO DO WINDOWS" FontSize="11" Foreground="#7f8c8d" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding SystemInfo.WindowsVersion, FallbackValue='Windows 10/11'}" FontSize="14" FontWeight="Medium" Foreground="#2c3e50" Margin="0,5,0,0"/>
+                    </StackPanel>
+                    <StackPanel Grid.Row="0" Grid.Column="1">
+                        <TextBlock Text="MEMÓRIA RAM TOTAL" FontSize="11" Foreground="#7f8c8d" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding SystemInfo.TotalRamBytes, Converter={StaticResource BytesToStringConverter}, FallbackValue='--'}" FontSize="14" FontWeight="Medium" Foreground="#2c3e50" Margin="0,5,0,0"/>
+                    </StackPanel>
+                    <StackPanel Grid.Row="1" Grid.Column="0">
+                        <TextBlock Text="DISCO TOTAL (C:)" FontSize="11" Foreground="#7f8c8d" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding SystemInfo.TotalDiskSpaceBytes, Converter={StaticResource BytesToStringConverter}, FallbackValue='--'}" FontSize="14" FontWeight="Medium" Foreground="#2c3e50" Margin="0,5,0,0"/>
+                    </StackPanel>
+                    <StackPanel Grid.Row="1" Grid.Column="1">
+                        <TextBlock Text="DISCO LIVRE (C:)" FontSize="11" Foreground="#7f8c8d" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding SystemInfo.FreeDiskSpaceBytes, Converter={StaticResource BytesToStringConverter}, FallbackValue='--'}" FontSize="14" FontWeight="Medium" Foreground="#2c3e50" Margin="0,5,0,0"/>
+                    </StackPanel>
+                    <StackPanel Grid.Row="2" Grid.Column="0">
+                        <TextBlock Text="ÚLTIMA REPARAÇÃO" FontSize="11" Foreground="#7f8c8d" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding SystemInfo.LastRepair, StringFormat='{}{0:dd/MM/yyyy}', FallbackValue='Nunca'}" FontSize="14" FontWeight="Medium" Foreground="#2c3e50" Margin="0,5,0,0"/>
+                    </StackPanel>
+                    <StackPanel Grid.Row="2" Grid.Column="1">
+                        <TextBlock Text="ÚLTIMA OTIMIZAÇÃO" FontSize="11" Foreground="#7f8c8d" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding SystemInfo.LastOptimization, StringFormat='{}{0:dd/MM/yyyy}', FallbackValue='Nunca'}" FontSize="14" FontWeight="Medium" Foreground="#2c3e50" Margin="0,5,0,0"/>
+                    </StackPanel>
+                    <StackPanel Grid.Row="3" Grid.Column="0">
+                        <TextBlock Text="ESPAÇO LIBERADO TOTAL" FontSize="11" Foreground="#7f8c8d" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding SystemInfo.SpaceFreedTotalBytes, Converter={StaticResource BytesToStringConverter}, FallbackValue='0 B'}" FontSize="14" FontWeight="Medium" Foreground="#2c3e50" Margin="0,5,0,0"/>
+                    </StackPanel>
+                    <StackPanel Grid.Row="3" Grid.Column="1">
+                        <TextBlock Text="STATUS" FontSize="11" Foreground="#7f8c8d" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding SystemInfo.StatusText, FallbackValue='Sistema saudável'}" FontSize="14" FontWeight="Bold" Foreground="{Binding SystemInfo.StatusColor, FallbackValue=#27ae60}" Margin="0,5,0,0"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Recommendations -->
+            <TextBlock Text="Recomendações" FontSize="18" FontWeight="Bold" Foreground="#2c3e50" Margin="0,0,0,15"/>
+            
+            <ItemsControl ItemsSource="{Binding Recommendations}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Background="#e8f4fd" BorderBrush="#3498db" BorderThickness="1" CornerRadius="8" Padding="15" Margin="0,0,0,10">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="💡" FontSize="16" VerticalAlignment="Top" Margin="0,0,10,0"/>
+                                <TextBlock Grid.Column="1" Text="{Binding}" FontSize="13" Foreground="#1a5276" TextWrapping="Wrap"/>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
