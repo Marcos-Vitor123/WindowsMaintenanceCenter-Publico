@@ -9,15 +9,17 @@ public class MaintenanceEngine
 {
     private readonly HistoryService _historyService;
     private readonly SoundService _soundService;
+    private readonly LoggingService _logger;
 
     public event Action<string, int>? TaskProgress; // status, progress
     public event Action<MaintenanceTask, int>? TaskCompleted; // task, exitCode
     public event Action<string>? TaskError;
 
-    public MaintenanceEngine(HistoryService historyService, SoundService soundService)
+    public MaintenanceEngine(HistoryService historyService, SoundService soundService, LoggingService logger)
     {
         _historyService = historyService;
         _soundService = soundService;
+        _logger = logger;
     }
 
     public async Task<int> RunTaskAsync(MaintenanceTask task, IProgress<string>? progress = null)
@@ -29,6 +31,8 @@ public class MaintenanceEngine
             FunctionName = task.Name,
             Command = task.Command
         };
+
+        _logger.Info($"[MaintenanceEngine] Iniciando tarefa: {task.Name} | Comando: {task.Command}");
 
         try
         {
@@ -49,11 +53,13 @@ public class MaintenanceEngine
             {
                 _soundService.PlayComplete();
                 progress?.Report($"✅ {task.Name} concluído com sucesso!");
+                _logger.Info($"[MaintenanceEngine] Tarefa '{task.Name}' concluída com sucesso (exit={exitCode}, duração={entry.Duration.TotalSeconds:F1}s)");
             }
             else
             {
                 _soundService.PlayWarning();
                 progress?.Report($"⚠️ {task.Name} concluído com avisos (código: {exitCode})");
+                _logger.Warn($"[MaintenanceEngine] Tarefa '{task.Name}' concluída com avisos (exit={exitCode}, duração={entry.Duration.TotalSeconds:F1}s)");
             }
 
             return exitCode;
@@ -66,6 +72,7 @@ public class MaintenanceEngine
             _historyService.AddEntry(entry);
             TaskError?.Invoke(ex.Message);
             _soundService.PlayError();
+            _logger.Error($"[MaintenanceEngine] Exceção na tarefa '{task.Name}'", ex);
             throw;
         }
     }

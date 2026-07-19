@@ -14,6 +14,7 @@ public class MaintenanceViewModel : ViewModelBase
     private readonly SoundService _soundService;
     private readonly ConfigService _configService;
     private readonly HistoryService _historyService;
+    private readonly LoggingService _logger;
     private readonly Action<string, int, bool, bool>? _statusCallback;
     private bool _isExecuting = false;
 
@@ -29,6 +30,7 @@ public class MaintenanceViewModel : ViewModelBase
         SoundService soundService,
         ConfigService configService,
         HistoryService historyService,
+        LoggingService logger,
         Action<string, int, bool, bool>? statusCallback = null)
     {
         _maintenanceEngine = maintenanceEngine;
@@ -38,6 +40,7 @@ public class MaintenanceViewModel : ViewModelBase
         _soundService = soundService;
         _configService = configService;
         _historyService = historyService;
+        _logger = logger;
         _statusCallback = statusCallback;
 
         ExecuteTaskCommand = new RelayCommand<string>(id =>
@@ -139,6 +142,8 @@ public class MaintenanceViewModel : ViewModelBase
 
             var task = Tasks.FirstOrDefault(t => t.Id == taskId);
             if (task == null) return;
+
+            _logger.Info($"[MaintenanceViewModel] Usuário solicitou tarefa: {task.Name} ({task.Id})");
 
             var restartMsg = task.RequiresRestart ? "\n\n⚠️ RECOMENDA-SE REINICIAR O COMPUTADOR APÓS A CONCLUSÃO!" : "";
             var confirm = System.Windows.MessageBox.Show(
@@ -301,6 +306,7 @@ public class MaintenanceViewModel : ViewModelBase
             UpdateStatus($"Erro: {ex.Message}", 0, false, false);
             _soundService.PlayError();
             _notificationService.ShowError("Erro", $"Ocorreu um erro durante a execução:\n{ex.Message}");
+            _logger.Error($"[MaintenanceViewModel] Exceção na tarefa '{taskId}'", ex);
         }
         finally
         {

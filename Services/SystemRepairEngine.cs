@@ -8,15 +8,17 @@ public class SystemRepairEngine
 {
     private readonly HistoryService _historyService;
     private readonly SoundService _soundService;
+    private readonly LoggingService _logger;
 
     public event Action<string, int>? TaskProgress;
     public event Action<string>? TaskCompleted;
     public event Action<string>? TaskError;
 
-    public SystemRepairEngine(HistoryService historyService, SoundService soundService)
+    public SystemRepairEngine(HistoryService historyService, SoundService soundService, LoggingService logger)
     {
         _historyService = historyService;
         _soundService = soundService;
+        _logger = logger;
     }
 
     public async Task<int> RunSystemRepairAsync(IProgress<string>? progress = null)
@@ -28,6 +30,8 @@ public class SystemRepairEngine
             FunctionName = "Reparação do Sistema",
             Command = "DISM /CheckHealth /ScanHealth /RestoreHealth && sfc /scannow"
         };
+
+        _logger.Info("[SystemRepairEngine] Iniciando reparação do sistema");
 
         var commands = new[]
         {
@@ -45,6 +49,7 @@ public class SystemRepairEngine
             {
                 progress?.Report($"Executando: {name}");
                 TaskProgress?.Invoke(name, 0);
+                _logger.Info($"[SystemRepairEngine] Executando: {name} | Comando: {cmd}");
 
                 var exitCode = await ExecuteCommandAsync(cmd, progress);
                 lastExitCode = exitCode;
@@ -52,10 +57,12 @@ public class SystemRepairEngine
                 if (exitCode != 0)
                 {
                     progress?.Report($"⚠️ {name} retornou código {exitCode}");
+                    _logger.Warn($"[SystemRepairEngine] {name} retornou código {exitCode}");
                 }
                 else
                 {
                     progress?.Report($"✅ {name} concluído");
+                    _logger.Info($"[SystemRepairEngine] {name} concluído com sucesso");
                 }
             }
 
@@ -70,6 +77,7 @@ public class SystemRepairEngine
             else
                 _soundService.PlayWarning();
 
+            _logger.Info($"[SystemRepairEngine] Reparação concluída (exit={lastExitCode}, duração={entry.Duration.TotalSeconds:F1}s)");
             return lastExitCode;
         }
         catch (Exception ex)
@@ -80,6 +88,7 @@ public class SystemRepairEngine
             _historyService.AddEntry(entry);
             TaskError?.Invoke(ex.Message);
             _soundService.PlayError();
+            _logger.Error("[SystemRepairEngine] Exceção na reparação do sistema", ex);
             throw;
         }
     }
@@ -93,6 +102,8 @@ public class SystemRepairEngine
             FunctionName = "Verificação de Disco (CHKDSK)",
             Command = "chkdsk C: /f /r"
         };
+
+        _logger.Info("[SystemRepairEngine] Agendando verificação de disco (CHKDSK)");
 
         try
         {
@@ -112,6 +123,7 @@ public class SystemRepairEngine
             else
                 _soundService.PlayWarning();
 
+            _logger.Info($"[SystemRepairEngine] CHKDSK concluído (exit={exitCode})");
             return exitCode;
         }
         catch (Exception ex)
@@ -122,6 +134,7 @@ public class SystemRepairEngine
             _historyService.AddEntry(entry);
             TaskError?.Invoke(ex.Message);
             _soundService.PlayError();
+            _logger.Error("[SystemRepairEngine] Exceção no CHKDSK", ex);
             throw;
         }
     }

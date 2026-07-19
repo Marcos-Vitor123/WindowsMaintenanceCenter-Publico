@@ -8,15 +8,17 @@ public class DeepCleanEngine
 {
     private readonly HistoryService _historyService;
     private readonly SoundService _soundService;
+    private readonly LoggingService _logger;
 
     public event Action<string, int>? TaskProgress;
     public event Action<string>? TaskCompleted;
     public event Action<string>? TaskError;
 
-    public DeepCleanEngine(HistoryService historyService, SoundService soundService)
+    public DeepCleanEngine(HistoryService historyService, SoundService soundService, LoggingService logger)
     {
         _historyService = historyService;
         _soundService = soundService;
+        _logger = logger;
     }
 
     public async Task<int> RunDeepCleanAsync(IProgress<string>? progress = null)
@@ -28,6 +30,8 @@ public class DeepCleanEngine
             FunctionName = "Limpeza Profunda + Imagens Antigas",
             Command = "cleanmgr /sagerun:1 && DISM /StartComponentCleanup /ResetBase"
         };
+
+        _logger.Info("[DeepCleanEngine] Iniciando limpeza profunda");
 
         var commands = new[]
         {
@@ -44,14 +48,21 @@ public class DeepCleanEngine
             {
                 progress?.Report($"Executando: {name}");
                 TaskProgress?.Invoke(name, 0);
+                _logger.Info($"[DeepCleanEngine] Executando: {name} | Comando: {cmd}");
 
                 var exitCode = await ExecuteCommandAsync(cmd, progress);
                 lastExitCode = exitCode;
 
                 if (exitCode != 0)
+                {
                     progress?.Report($"⚠️ {name} retornou código {exitCode}");
+                    _logger.Warn($"[DeepCleanEngine] {name} retornou código {exitCode}");
+                }
                 else
+                {
                     progress?.Report($"✅ {name} concluído");
+                    _logger.Info($"[DeepCleanEngine] {name} concluído com sucesso");
+                }
             }
 
             entry.Success = lastExitCode == 0;
@@ -66,6 +77,7 @@ public class DeepCleanEngine
             else
                 _soundService.PlayWarning();
 
+            _logger.Info($"[DeepCleanEngine] Limpeza profunda concluída (exit={lastExitCode}, duração={entry.Duration.TotalSeconds:F1}s)");
             return lastExitCode;
         }
         catch (Exception ex)
@@ -76,6 +88,7 @@ public class DeepCleanEngine
             _historyService.AddEntry(entry);
             TaskError?.Invoke(ex.Message);
             _soundService.PlayError();
+            _logger.Error("[DeepCleanEngine] Exceção na limpeza profunda", ex);
             throw;
         }
     }

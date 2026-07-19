@@ -22,6 +22,7 @@ namespace WindowsMaintenanceCenter
             services.AddSingleton<NotificationService>();
             services.AddSingleton<SoundService>();
             services.AddSingleton<StartupManager>();
+            services.AddSingleton<LoggingService>();
             services.AddSingleton<MaintenanceEngine>();
             services.AddSingleton<SystemRepairEngine>();
             services.AddSingleton<DeepCleanEngine>();
@@ -32,6 +33,9 @@ namespace WindowsMaintenanceCenter
 
             Services = services.BuildServiceProvider();
 
+            var logger = Services.GetRequiredService<LoggingService>();
+            logger.Info("=== WMC iniciado ===");
+
             var automation = Services.GetRequiredService<AutomationService>();
             automation.Start();
 
@@ -41,10 +45,15 @@ namespace WindowsMaintenanceCenter
             mainWindow.DataContext = Services.GetRequiredService<MainViewModel>();
             mainWindow.SetNotificationService(Services.GetRequiredService<NotificationService>());
             mainWindow.Show();
+
+            logger.Info("MainWindow exibida com sucesso");
         }
 
         protected override void OnExit(ExitEventArgs e)
         {
+            var logger = Services?.GetService<LoggingService>();
+            logger?.Info("=== WMC encerrado ===");
+
             var automation = Services?.GetService<AutomationService>();
             automation?.Stop();
             base.OnExit(e);
