@@ -34,13 +34,15 @@ public class StartupManager
 
         if (enabled)
         {
-            // Re-enable: we'd need to store the value somewhere
-            // For simplicity, just delete the disabled marker
-            // In real implementation, store original value
+            var disabledValue = key.GetValue($"_disabled_{entry.ProgramName}");
+            if (disabledValue != null)
+            {
+                key.DeleteValue($"_disabled_{entry.ProgramName}", false);
+                key.SetValue(entry.ProgramName, disabledValue);
+            }
         }
         else
         {
-            // Disable: rename value to _disabled_<name>
             var value = key.GetValue(entry.ProgramName)?.ToString();
             if (value != null)
             {

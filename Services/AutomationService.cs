@@ -40,21 +40,28 @@ public class AutomationService
 
     private async void CheckPendingTasks(object? state)
     {
-        var config = _configService.GetConfig();
-        if (!config.AutoMode) return;
-
-        var history = _historyService.GetHistory();
-        var now = DateTime.Now;
-
-        foreach (var schedule in config.TaskSchedules)
+        try
         {
-            if (!schedule.Value.Enabled) continue;
+            var config = _configService.GetConfig();
+            if (!config.AutoMode) return;
 
-            var lastRun = history.FirstOrDefault(h => h.FunctionName.Contains(schedule.Key, StringComparison.OrdinalIgnoreCase))?.Date;
-            if (lastRun == null || (now - lastRun.Value).TotalDays >= schedule.Value.IntervalDays)
+            var history = _historyService.GetHistory();
+            var now = DateTime.Now;
+
+            foreach (var schedule in config.TaskSchedules)
             {
-                await RunScheduledTaskAsync(schedule.Key);
+                if (!schedule.Value.Enabled) continue;
+
+                var lastRun = history.FirstOrDefault(h => h.FunctionName.Contains(schedule.Key, StringComparison.OrdinalIgnoreCase))?.Date;
+                if (lastRun == null || (now - lastRun.Value).TotalDays >= schedule.Value.IntervalDays)
+                {
+                    await RunScheduledTaskAsync(schedule.Key);
+                }
             }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[AutomationService] Erro ao verificar tarefas pendentes: {ex.Message}");
         }
     }
 

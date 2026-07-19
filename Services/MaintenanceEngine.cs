@@ -72,8 +72,6 @@ public class MaintenanceEngine
 
     private async Task<int> ExecuteCommandAsync(string command, IProgress<string>? progress)
     {
-        var tcs = new TaskCompletionSource<int>();
-
         var startInfo = new ProcessStartInfo
         {
             FileName = "cmd.exe",
@@ -86,16 +84,20 @@ public class MaintenanceEngine
             StandardErrorEncoding = System.Text.Encoding.GetEncoding(850)
         };
 
-        using var process = new Process { StartInfo = startInfo, EnableRaisingEvents = true };
+        using var process = new Process { StartInfo = startInfo };
 
         var outputBuilder = new System.Text.StringBuilder();
         var errorBuilder = new System.Text.StringBuilder();
+        var outputLock = new object();
 
         process.OutputDataReceived += (s, e) =>
         {
             if (e.Data != null)
             {
-                outputBuilder.AppendLine(e.Data);
+                lock (outputLock)
+                {
+                    outputBuilder.AppendLine(e.Data);
+                }
                 progress?.Report(e.Data);
             }
         };
@@ -103,16 +105,20 @@ public class MaintenanceEngine
         process.ErrorDataReceived += (s, e) =>
         {
             if (e.Data != null)
-                errorBuilder.AppendLine(e.Data);
+            {
+                lock (outputLock)
+                {
+                    errorBuilder.AppendLine(e.Data);
+                }
+            }
         };
-
-        process.Exited += (s, e) => tcs.SetResult(process.ExitCode);
 
         process.Start();
         process.BeginOutputReadLine();
         process.BeginErrorReadLine();
+        await process.WaitForExitAsync();
 
-        return await tcs.Task;
+        return process.ExitCode;
     }
 
     private long EstimateSpaceFreed(string taskId, int exitCode)

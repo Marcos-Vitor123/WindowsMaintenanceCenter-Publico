@@ -118,19 +118,24 @@ public class MainViewModel : ViewModelBase
 
     private async void RunDailyOptimizationAsync()
     {
-        CurrentPage = PageType.Maintenance;
-        
-        // Wait a bit for the page to load
-        await Task.Delay(100);
-        
-        if (CurrentViewModel is MaintenanceViewModel maintenanceVM)
+        try
         {
-            // Find the DailyOptimization task and execute it
-            var dailyTask = maintenanceVM.Tasks.FirstOrDefault(t => t.Id == "DailyOptimization");
-            if (dailyTask != null)
+            CurrentPage = PageType.Maintenance;
+            
+            await Task.Delay(100);
+            
+            if (CurrentViewModel is MaintenanceViewModel maintenanceVM)
             {
-                maintenanceVM.ExecuteTaskCommand.Execute(dailyTask.Id);
+                var dailyTask = maintenanceVM.Tasks.FirstOrDefault(t => t.Id == "DailyOptimization");
+                if (dailyTask != null)
+                {
+                    maintenanceVM.ExecuteTaskCommand.Execute(dailyTask.Id);
+                }
             }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MainViewModel] Erro na otimização diária: {ex.Message}");
         }
     }
 

@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
-using WindowsMaintenanceCenter.Models;
 using WindowsMaintenanceCenter.Services;
 using WindowsMaintenanceCenter.ViewModels;
-using WindowsMaintenanceCenter.Views;
 
 namespace WindowsMaintenanceCenter
 {
@@ -21,7 +18,7 @@ namespace WindowsMaintenanceCenter
             services.AddSingleton<ILogger, ConfigService>();
             services.AddSingleton<ConfigService>();
             services.AddSingleton<HistoryService>();
-            services.AddSingleton<DiagnosticService>();
+            services.AddSingleton<DiagnosticService>(sp => new DiagnosticService(sp.GetRequiredService<HistoryService>()));
             services.AddSingleton<NotificationService>();
             services.AddSingleton<SoundService>();
             services.AddSingleton<StartupManager>();
@@ -32,21 +29,6 @@ namespace WindowsMaintenanceCenter
 
             // ViewModels
             services.AddTransient<MainViewModel>();
-            services.AddTransient<HomeViewModel>();
-            services.AddTransient<MaintenanceViewModel>();
-            services.AddTransient<DiagnosticsViewModel>();
-            services.AddTransient<StartupViewModel>();
-            services.AddTransient<SettingsViewModel>();
-            services.AddTransient<HistoryViewModel>();
-
-            // Views
-            services.AddTransient<MainWindow>();
-            services.AddTransient<HomeView>();
-            services.AddTransient<MaintenanceView>();
-            services.AddTransient<DiagnosticsView>();
-            services.AddTransient<StartupView>();
-            services.AddTransient<SettingsView>();
-            services.AddTransient<HistoryView>();
 
             Services = services.BuildServiceProvider();
 
@@ -55,7 +37,7 @@ namespace WindowsMaintenanceCenter
 
             base.OnStartup(e);
 
-            var mainWindow = Services.GetRequiredService<MainWindow>();
+            var mainWindow = new Views.MainWindow();
             mainWindow.DataContext = Services.GetRequiredService<MainViewModel>();
             mainWindow.Show();
         }

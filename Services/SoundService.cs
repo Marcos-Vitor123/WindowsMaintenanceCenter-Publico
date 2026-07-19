@@ -6,7 +6,7 @@ public class SoundService
 {
     public void PlaySuccess()
     {
-        try { SystemSounds.Exclamation.Play(); } catch { }
+        try { SystemSounds.Asterisk.Play(); } catch { }
     }
 
     public void PlayWarning()

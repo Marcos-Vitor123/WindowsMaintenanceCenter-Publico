@@ -18,6 +18,8 @@
             <conv:BoolToEnabledTextConverter x:Key="BoolToEnabledTextConverter"/>
             <conv:BoolToResultConverter x:Key="BoolToResultConverter"/>
             <conv:BoolToResultColorConverter x:Key="BoolToResultColorConverter"/>
+            <conv:BoolToResultIconConverter x:Key="BoolToResultIconConverter"/>
+            <conv:BoolToResultTextConverter x:Key="BoolToResultTextConverter"/>
             <conv:BoolToRestartIconConverter x:Key="BoolToRestartIconConverter"/>
             <conv:BoolToDeepCleanIconConverter x:Key="BoolToDeepCleanIconConverter"/>
             <conv:TaskIdToColorConverter x:Key="TaskIdToColorConverter"/>

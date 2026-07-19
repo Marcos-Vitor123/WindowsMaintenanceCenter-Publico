@@ -82,8 +82,6 @@ public class DeepCleanEngine
 
     private async Task<int> ExecuteCommandAsync(string command, IProgress<string>? progress)
     {
-        var tcs = new TaskCompletionSource<int>();
-
         var startInfo = new ProcessStartInfo
         {
             FileName = "cmd.exe",
@@ -93,11 +91,10 @@ public class DeepCleanEngine
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             StandardOutputEncoding = System.Text.Encoding.GetEncoding(850),
-            StandardErrorEncoding = System.Text.Encoding.GetEncoding(850),
-            Verb = "runas"
+            StandardErrorEncoding = System.Text.Encoding.GetEncoding(850)
         };
 
-        using var process = new Process { StartInfo = startInfo, EnableRaisingEvents = true };
+        using var process = new Process { StartInfo = startInfo };
 
         process.OutputDataReceived += (s, e) =>
         {
@@ -105,12 +102,17 @@ public class DeepCleanEngine
                 progress?.Report(e.Data);
         };
 
-        process.Exited += (s, e) => tcs.SetResult(process.ExitCode);
+        process.ErrorDataReceived += (s, e) =>
+        {
+            if (e.Data != null)
+                progress?.Report(e.Data);
+        };
 
         process.Start();
         process.BeginOutputReadLine();
         process.BeginErrorReadLine();
+        await process.WaitForExitAsync();
 
-        return await tcs.Task;
+        return process.ExitCode;
     }
 }

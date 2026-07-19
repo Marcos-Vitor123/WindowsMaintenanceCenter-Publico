@@ -14,6 +14,7 @@ public class MaintenanceViewModel : ViewModelBase
     private readonly SoundService _soundService;
     private readonly ConfigService _configService;
     private readonly HistoryService _historyService;
+    private bool _isExecuting = false;
 
     public ObservableCollection<MaintenanceTask> Tasks { get; } = new();
 
@@ -36,7 +37,10 @@ public class MaintenanceViewModel : ViewModelBase
         _configService = configService;
         _historyService = historyService;
 
-        ExecuteTaskCommand = new RelayCommand<string>(async id => await ExecuteTaskAsync(id));
+        ExecuteTaskCommand = new RelayCommand<string>(id =>
+        {
+            if (id != null) _ = ExecuteTaskAsync(id);
+        });
         
         LoadTasks();
     }
@@ -115,13 +119,19 @@ public class MaintenanceViewModel : ViewModelBase
     private async Task ExecuteTaskAsync(string? taskId)
     {
         if (string.IsNullOrEmpty(taskId)) return;
+        if (_isExecuting)
+        {
+            _notificationService.ShowWarning("Aguarde", "Já existe uma tarefa em execução.");
+            return;
+        }
 
         try
         {
+            _isExecuting = true;
+
             var task = Tasks.FirstOrDefault(t => t.Id == taskId);
             if (task == null) return;
 
-            // Show confirmation
             var restartMsg = task.RequiresRestart ? "\n\n⚠️ RECOMENDA-SE REINICIAR O COMPUTADOR APÓS A CONCLUSÃO!" : "";
             var confirm = System.Windows.MessageBox.Show(
                 $"Deseja executar: {task.Name}?\n\n{task.Description}{restartMsg}",
@@ -136,22 +146,24 @@ public class MaintenanceViewModel : ViewModelBase
             switch (taskId)
             {
                 case "DailyOptimization":
-                    // Run temp files cleanup + disk cleanup
-                    await _maintenanceEngine.RunTaskAsync(new MaintenanceTask
+                    exitCode = await _maintenanceEngine.RunTaskAsync(new MaintenanceTask
                     {
                         Id = "TempFiles",
                         Name = "Limpeza de temporários",
                         Command = @"del /q /f /s ""%TEMP%\*"" && for /d %%x in (""%TEMP%\*"") do @rd /s /q ""%%x""",
                         RequiresRestart = false
                     });
-                    await _maintenanceEngine.RunTaskAsync(new MaintenanceTask
+                    var exitCode2 = await _maintenanceEngine.RunTaskAsync(new MaintenanceTask
                     {
                         Id = "DiskCleanup",
                         Name = "Limpeza de Disco",
                         Command = "cleanmgr /sagerun:1",
                         RequiresRestart = false
                     });
-                    _notificationService.ShowSuccess("Otimização Diária", "Concluída com sucesso!");
+                    if (exitCode == 0 && exitCode2 == 0)
+                        _notificationService.ShowSuccess("Otimização Diária", "Concluída com sucesso!");
+                    else
+                        _notificationService.ShowWarning("Otimização Diária", $"Concluída com avisos (código: {exitCode}, {exitCode2})");
                     break;
 
                 case "SystemRepair":
@@ -223,6 +235,10 @@ public class MaintenanceViewModel : ViewModelBase
         catch (Exception ex)
         {
             _notificationService.ShowError("Erro", $"Ocorreu um erro durante a execução:\n{ex.Message}");
+        }
+        finally
+        {
+            _isExecuting = false;
         }
     }
 }

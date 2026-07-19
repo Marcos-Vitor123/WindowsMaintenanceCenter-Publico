@@ -76,8 +76,13 @@ public class HistoryService : ILogger
         try
         {
             var json = JsonSerializer.Serialize(_entries, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(_logPath, json);
+            var tempPath = _logPath + ".tmp";
+            File.WriteAllText(tempPath, json);
+            File.Move(tempPath, _logPath, overwrite: true);
         }
-        catch { }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[HistoryService] Erro ao salvar histórico: {ex.Message}");
+        }
     }
 }

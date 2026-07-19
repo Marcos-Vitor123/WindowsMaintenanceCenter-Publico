@@ -60,8 +60,13 @@ public class ConfigService : ILogger
         try
         {
             var json = JsonSerializer.Serialize(_config, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(_configPath, json);
+            var tempPath = _configPath + ".tmp";
+            File.WriteAllText(tempPath, json);
+            File.Move(tempPath, _configPath, overwrite: true);
         }
-        catch { }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ConfigService] Erro ao salvar configuração: {ex.Message}");
+        }
     }
 }
