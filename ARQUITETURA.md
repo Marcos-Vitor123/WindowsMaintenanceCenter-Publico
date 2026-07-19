@@ -507,3 +507,9 @@ dotnet publish -c Release -r win-x64 --no-self-contained
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## 12. Nota sobre o Desenvolvimento
+
+Este projeto foi desenvolvido com **Inteligência Artificial (IA)** em conjunto com **interação humana**, onde cada decisão, comando e resultado passou por **revisão e validação do desenvolvedor**. A IA atuou como ferramenta de auxílio na geração de código, documentação e arquitetura, sendo o humano o responsável pela supervisão, correção e aprovação final de todo o conteúdo.

@@ -215,3 +215,9 @@ Contribuições são bem-vindas! Para contribuir:
 ## Autor
 
 **Marcos Vitor** - [GitHub](https://github.com/Marcos-Vitor123)
+
+---
+
+## Desenvolvimento
+
+Este projeto foi desenvolvido com **Inteligência Artificial (IA)** em conjunto com **interação humana**, onde cada decisão, comando e resultado passou por **revisão e validação do desenvolvedor**. A IA atuou como ferramenta de auxílio na geração de código, documentação e arquitetura, sendo o humano o responsável pela supervisão, correção e aprovação final de todo o conteúdo.
