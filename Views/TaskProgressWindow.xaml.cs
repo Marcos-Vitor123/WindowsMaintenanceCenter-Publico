@@ -18,6 +18,11 @@ public partial class TaskProgressWindow : Window
         };
     }
 
+    private void Grid_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        DragMove();
+    }
+
     private void DoCancel()
     {
         if (WasCancelled) return;
