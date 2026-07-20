@@ -10,15 +10,24 @@ public partial class TaskProgressWindow : Window
     public TaskProgressWindow()
     {
         InitializeComponent();
-        CancelButton.Click += (_, _) =>
+        CancelButton.Click += (_, _) => DoCancel();
+        CloseButton.Click += (_, _) =>
         {
-            WasCancelled = true;
-            CancelButton.IsEnabled = false;
-            CancelButton.Content = "Cancelando...";
-            StatusText.Text = "Cancelando...";
-            CancelRequested?.Invoke();
+            DoCancel();
+            Close();
         };
-        CloseButton.Click += (_, _) => Close();
+    }
+
+    private void DoCancel()
+    {
+        if (WasCancelled) return;
+        WasCancelled = true;
+        CancelButton.IsEnabled = false;
+        CancelButton.Content = "Cancelando...";
+        CloseButton.IsEnabled = false;
+        CloseButton.Content = "Cancelando...";
+        StatusText.Text = "Cancelando...";
+        CancelRequested?.Invoke();
     }
 
     public void SetTaskInfo(string icon, string title, string subtitle)
@@ -56,6 +65,8 @@ public partial class TaskProgressWindow : Window
 
             CancelButton.Visibility = Visibility.Collapsed;
             CloseButton.Visibility = Visibility.Visible;
+            CloseButton.IsEnabled = true;
+            CloseButton.Content = "Fechar";
         });
     }
 
