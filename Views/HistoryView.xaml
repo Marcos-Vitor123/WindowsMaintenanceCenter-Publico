@@ -7,7 +7,7 @@
              d:DesignHeight="500" d:DesignWidth="560"
              Background="#f0f0f0">
     
-    <Grid Margin="20,15">
+    <Grid Margin="20,15,20,40">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>

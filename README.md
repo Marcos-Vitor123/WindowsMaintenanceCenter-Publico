@@ -8,7 +8,8 @@
   <img src="https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet" alt=".NET 10">
   <img src="https://img.shields.io/badge/C%23-Latest-239120?logo=csharp" alt="C#">
   <img src="https://img.shields.io/badge/WPF-UI-9B4DCA" alt="WPF">
-  <img src="https://img.shields.io/badge/Licença-MIT-green" alt="MIT License">
+  <img src="https://img.shields.io/badge/Licença-PolyForm%20Noncommercial-orange" alt="PolyForm Noncommercial License">
+  <img src="https://img.shields.io/badge/Código_Fonte-GPL--3.0-blue" alt="GPL-3.0 (Source Code)">
   <img src="https://img.shields.io/badge/Windows-10%2F11-0078D4?logo=windows" alt="Windows 10/11">
 </p>
 
@@ -248,7 +249,25 @@ WindowsMaintenanceCenter/
 
 ## Licença
 
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+Este projeto está sob a **PolyForm Noncommercial License 1.0.0**.
+
+| Permissão | Permitido? |
+|-----------|-----------|
+| **Uso pessoal** | ✅ Sim |
+| **Estudo e pesquisa** | ✅ Sim |
+| **Modificar o código** | ✅ Sim |
+| **Distribuir o código fonte** | ✅ Sim (sob GPL-3.0) |
+| **Vender o software** | ❌ NÃO |
+| **Uso comercial** | ❌ NÃO |
+| **Revender cópias** | ❌ NÃO |
+
+O **código fonte** deste projeto também está disponível sob a licença **GNU GPL v3.0**, permitindo que qualquer pessoa estude, modifique e contribua com o projeto.
+
+A **forma compilada/executável** é regida exclusivamente pela licença **PolyForm Noncommercial**, que proíbe qualquer forma de uso comercial ou venda.
+
+Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+
+**© 2026 Marcos Vitor — Todos os direitos reservados.**
 
 ---
 

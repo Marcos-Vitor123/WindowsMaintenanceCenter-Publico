@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WindowsMaintenanceCenter.Views"
         xmlns:vm="clr-namespace:WindowsMaintenanceCenter.ViewModels"
+        xmlns:conv="clr-namespace:WindowsMaintenanceCenter.Converters"
         mc:Ignorable="d"
         Title="Windows Maintenance Center"
         Height="550" Width="850"
@@ -12,6 +13,12 @@
         WindowStartupLocation="CenterScreen"
         Icon="pack://application:,,,/Assets/ico.ico"
         Background="#f0f0f0">
+    
+    <Window.Resources>
+        <conv:PageSelectedToBackgroundConverter x:Key="PageToBgConverter"/>
+        <conv:PageSelectedToForegroundConverter x:Key="PageToFgConverter"/>
+        <conv:PageSelectedToWeightConverter x:Key="PageToWeightConverter"/>
+    </Window.Resources>
     
     <Grid>
         <Grid.ColumnDefinitions>
@@ -41,39 +48,157 @@
                         <Button Tag="🏠" Content="Início"
                                 Command="{Binding NavigateCommand}" CommandParameter="{x:Static vm:PageType.Home}"
                                 Height="50" Margin="10,5" HorizontalContentAlignment="Left" Padding="15,0"
-                                FontSize="14" FontWeight="SemiBold" Foreground="#2c3e50"
-                                Background="Transparent" BorderThickness="0" Cursor="Hand"/>
+                                FontSize="14" Foreground="#2c3e50"
+                                Background="Transparent" BorderThickness="0" Cursor="Hand">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Value="True">
+                                            <DataTrigger.Binding>
+                                                <MultiBinding Converter="{StaticResource PageToBgConverter}">
+                                                    <Binding Path="CurrentPage"/>
+                                                    <Binding Source="{x:Static vm:PageType.Home}"/>
+                                                </MultiBinding>
+                                            </DataTrigger.Binding>
+                                            <Setter Property="Background" Value="#3498db"/>
+                                            <Setter Property="Foreground" Value="White"/>
+                                            <Setter Property="FontWeight" Value="Bold"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
                         <Button Tag="🛠" Content="Manutenção"
                                 Command="{Binding NavigateCommand}" CommandParameter="{x:Static vm:PageType.Maintenance}"
                                 Height="50" Margin="10,5" HorizontalContentAlignment="Left" Padding="15,0"
-                                FontSize="14" FontWeight="SemiBold" Foreground="#2c3e50"
-                                Background="Transparent" BorderThickness="0" Cursor="Hand"/>
+                                FontSize="14" Foreground="#2c3e50"
+                                Background="Transparent" BorderThickness="0" Cursor="Hand">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Value="True">
+                                            <DataTrigger.Binding>
+                                                <MultiBinding Converter="{StaticResource PageToBgConverter}">
+                                                    <Binding Path="CurrentPage"/>
+                                                    <Binding Source="{x:Static vm:PageType.Maintenance}"/>
+                                                </MultiBinding>
+                                            </DataTrigger.Binding>
+                                            <Setter Property="Background" Value="#3498db"/>
+                                            <Setter Property="Foreground" Value="White"/>
+                                            <Setter Property="FontWeight" Value="Bold"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
                         <Button Tag="📊" Content="Diagnóstico"
                                 Command="{Binding NavigateCommand}" CommandParameter="{x:Static vm:PageType.Diagnostics}"
                                 Height="50" Margin="10,5" HorizontalContentAlignment="Left" Padding="15,0"
-                                FontSize="14" FontWeight="SemiBold" Foreground="#2c3e50"
-                                Background="Transparent" BorderThickness="0" Cursor="Hand"/>
+                                FontSize="14" Foreground="#2c3e50"
+                                Background="Transparent" BorderThickness="0" Cursor="Hand">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Value="True">
+                                            <DataTrigger.Binding>
+                                                <MultiBinding Converter="{StaticResource PageToBgConverter}">
+                                                    <Binding Path="CurrentPage"/>
+                                                    <Binding Source="{x:Static vm:PageType.Diagnostics}"/>
+                                                </MultiBinding>
+                                            </DataTrigger.Binding>
+                                            <Setter Property="Background" Value="#3498db"/>
+                                            <Setter Property="Foreground" Value="White"/>
+                                            <Setter Property="FontWeight" Value="Bold"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
                         <Button Tag="🚀" Content="Inicialização"
                                 Command="{Binding NavigateCommand}" CommandParameter="{x:Static vm:PageType.Startup}"
                                 Height="50" Margin="10,5" HorizontalContentAlignment="Left" Padding="15,0"
-                                FontSize="14" FontWeight="SemiBold" Foreground="#2c3e50"
-                                Background="Transparent" BorderThickness="0" Cursor="Hand"/>
+                                FontSize="14" Foreground="#2c3e50"
+                                Background="Transparent" BorderThickness="0" Cursor="Hand">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Value="True">
+                                            <DataTrigger.Binding>
+                                                <MultiBinding Converter="{StaticResource PageToBgConverter}">
+                                                    <Binding Path="CurrentPage"/>
+                                                    <Binding Source="{x:Static vm:PageType.Startup}"/>
+                                                </MultiBinding>
+                                            </DataTrigger.Binding>
+                                            <Setter Property="Background" Value="#3498db"/>
+                                            <Setter Property="Foreground" Value="White"/>
+                                            <Setter Property="FontWeight" Value="Bold"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
                         <Button Tag="⚙" Content="Configurações"
                                 Command="{Binding NavigateCommand}" CommandParameter="{x:Static vm:PageType.Settings}"
                                 Height="50" Margin="10,5" HorizontalContentAlignment="Left" Padding="15,0"
-                                FontSize="14" FontWeight="SemiBold" Foreground="#2c3e50"
-                                Background="Transparent" BorderThickness="0" Cursor="Hand"/>
+                                FontSize="14" Foreground="#2c3e50"
+                                Background="Transparent" BorderThickness="0" Cursor="Hand">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Value="True">
+                                            <DataTrigger.Binding>
+                                                <MultiBinding Converter="{StaticResource PageToBgConverter}">
+                                                    <Binding Path="CurrentPage"/>
+                                                    <Binding Source="{x:Static vm:PageType.Settings}"/>
+                                                </MultiBinding>
+                                            </DataTrigger.Binding>
+                                            <Setter Property="Background" Value="#3498db"/>
+                                            <Setter Property="Foreground" Value="White"/>
+                                            <Setter Property="FontWeight" Value="Bold"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
                         <Button Tag="📋" Content="Histórico"
                                 Command="{Binding NavigateCommand}" CommandParameter="{x:Static vm:PageType.History}"
                                 Height="50" Margin="10,5" HorizontalContentAlignment="Left" Padding="15,0"
-                                FontSize="14" FontWeight="SemiBold" Foreground="#2c3e50"
-                                Background="Transparent" BorderThickness="0" Cursor="Hand"/>
+                                FontSize="14" Foreground="#2c3e50"
+                                Background="Transparent" BorderThickness="0" Cursor="Hand">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Value="True">
+                                            <DataTrigger.Binding>
+                                                <MultiBinding Converter="{StaticResource PageToBgConverter}">
+                                                    <Binding Path="CurrentPage"/>
+                                                    <Binding Source="{x:Static vm:PageType.History}"/>
+                                                </MultiBinding>
+                                            </DataTrigger.Binding>
+                                            <Setter Property="Background" Value="#3498db"/>
+                                            <Setter Property="Foreground" Value="White"/>
+                                            <Setter Property="FontWeight" Value="Bold"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
                     </StackPanel>
                 </ScrollViewer>
 
                 <!-- Version/Footer -->
-                <Border Grid.Row="2" Background="#f8f9fa" BorderBrush="#e0e0e0" BorderThickness="0,1,0,0" Padding="10">
-                    <TextBlock Text="v1.0.0" FontSize="11" Foreground="#7f8c8d" HorizontalAlignment="Center"/>
+                <Border Grid.Row="2" Background="#f8f9fa" BorderBrush="#e0e0e0" BorderThickness="0,1,0,0" Padding="10,8">
+                    <StackPanel HorizontalAlignment="Center">
+                        <TextBlock Text="Windows Maintenance Center" FontSize="10" FontWeight="SemiBold" Foreground="#2c3e50" HorizontalAlignment="Center"/>
+                        <TextBlock Text="v1.0.0 — Marcos Vitor" FontSize="10" Foreground="#7f8c8d" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                        <TextBlock Text="© 2026 — Uso Não Comercial" FontSize="9" Foreground="#95a5a6" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                    </StackPanel>
                 </Border>
             </Grid>
         </Border>

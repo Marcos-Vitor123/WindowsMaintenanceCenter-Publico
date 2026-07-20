@@ -8,18 +8,14 @@ namespace WindowsMaintenanceCenter.Services;
 public class StartupManager
 {
     private const string RunKeyPath = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
-    private const string RunOnceKeyPath = @"SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce";
-    private const string UserRunKeyPath = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
+    private const string TaskName = "WindowsMaintenanceCenter";
 
     public List<StartupEntry> GetStartupEntries()
     {
         var entries = new List<StartupEntry>();
 
-        // HKLM\Run
         entries.AddRange(ReadRegistryKey(Registry.LocalMachine, RunKeyPath, "HKLM"));
-
-        // HKCU\Run
-        entries.AddRange(ReadRegistryKey(Registry.CurrentUser, UserRunKeyPath, "HKCU"));
+        entries.AddRange(ReadRegistryKey(Registry.CurrentUser, RunKeyPath, "HKCU"));
 
         return entries;
     }
@@ -54,13 +50,107 @@ public class StartupManager
 
     public void SetAutoStart(bool enabled)
     {
-        const string appName = "WindowsMaintenanceCenter";
-        using var key = Registry.CurrentUser.OpenSubKey(RunKeyPath, true);
-        if (key == null) return;
+        var exePath = Environment.ProcessPath ?? "";
+        if (string.IsNullOrEmpty(exePath)) return;
 
         if (enabled)
         {
-            var exePath = Environment.ProcessPath ?? "";
+            CreateScheduledTask(exePath);
+        }
+        else
+        {
+            DeleteScheduledTask();
+        }
+    }
+
+    public bool IsAutoStartEnabled()
+    {
+        return IsScheduledTaskCreated();
+    }
+
+    private void CreateScheduledTask(string exePath)
+    {
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = "schtasks.exe",
+                Arguments = $"/Create /TN \"{TaskName}\" /TR \"\\\"{exePath}\\\" --minimized\" /SC ONLOGON /RL HIGHEST /F",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                WindowStyle = ProcessWindowStyle.Hidden,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            };
+
+            using var process = Process.Start(psi);
+            process?.WaitForExit(5000);
+        }
+        catch
+        {
+            // Fallback: registry-based (will show UAC)
+            SetAutoStartRegistry(exePath, true);
+        }
+    }
+
+    private void DeleteScheduledTask()
+    {
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = "schtasks.exe",
+                Arguments = $"/Delete /TN \"{TaskName}\" /F",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                WindowStyle = ProcessWindowStyle.Hidden,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            };
+
+            using var process = Process.Start(psi);
+            process?.WaitForExit(5000);
+        }
+        catch
+        {
+            SetAutoStartRegistry("", false);
+        }
+    }
+
+    private bool IsScheduledTaskCreated()
+    {
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = "schtasks.exe",
+                Arguments = $"/Query /TN \"{TaskName}\"",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                WindowStyle = ProcessWindowStyle.Hidden,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            };
+
+            using var process = Process.Start(psi);
+            if (process == null) return false;
+            process.WaitForExit(5000);
+            return process.ExitCode == 0;
+        }
+        catch
+        {
+            return IsAutoStartRegistryEnabled();
+        }
+    }
+
+    private void SetAutoStartRegistry(string exePath, bool enabled)
+    {
+        using var key = Registry.CurrentUser.OpenSubKey(RunKeyPath, true);
+        if (key == null) return;
+
+        const string appName = "WindowsMaintenanceCenter";
+        if (enabled)
+        {
             key.SetValue(appName, $"\"{exePath}\" --minimized");
         }
         else
@@ -69,14 +159,14 @@ public class StartupManager
         }
     }
 
-    public bool IsAutoStartEnabled()
+    private bool IsAutoStartRegistryEnabled()
     {
         const string appName = "WindowsMaintenanceCenter";
         using var key = Registry.CurrentUser.OpenSubKey(RunKeyPath, false);
         return key?.GetValue(appName) != null;
     }
 
-    public void Refresh() { } // Would check for new entries
+    public void Refresh() { }
 
     private List<StartupEntry> ReadRegistryKey(RegistryKey root, string keyPath, string prefix)
     {
@@ -121,7 +211,6 @@ public class StartupManager
 
     private string ExtractExePath(string command)
     {
-        // Simple extraction - in reality would need proper parsing
         var match = System.Text.RegularExpressions.Regex.Match(command, @"""([^""]+\.exe)""");
         if (match.Success) return match.Groups[1].Value;
         match = System.Text.RegularExpressions.Regex.Match(command, @"([A-Za-z]:\\[^""\s]+\.exe)");

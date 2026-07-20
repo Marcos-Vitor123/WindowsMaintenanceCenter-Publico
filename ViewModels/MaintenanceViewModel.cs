@@ -1,7 +1,9 @@
 using System.Collections.ObjectModel;
+using System.Windows;
 using System.Windows.Input;
 using WindowsMaintenanceCenter.Models;
 using WindowsMaintenanceCenter.Services;
+using WindowsMaintenanceCenter.Views;
 
 namespace WindowsMaintenanceCenter.ViewModels;
 
@@ -145,156 +147,199 @@ public class MaintenanceViewModel : ViewModelBase
 
             _logger.Info($"[MaintenanceViewModel] Usuário solicitou tarefa: {task.Name} ({task.Id})");
 
-            var restartMsg = task.RequiresRestart ? "\n\n⚠️ RECOMENDA-SE REINICIAR O COMPUTADOR APÓS A CONCLUSÃO!" : "";
-            var confirm = System.Windows.MessageBox.Show(
-                $"Deseja executar: {task.Name}?\n\n{task.Description}{restartMsg}",
-                "Confirmar Operação",
-                System.Windows.MessageBoxButton.YesNo,
-                System.Windows.MessageBoxImage.Question);
+            var progressWindow = new TaskProgressWindow
+            {
+                Owner = Application.Current.MainWindow
+            };
 
-            if (confirm != System.Windows.MessageBoxResult.Yes) return;
+            var (totalSteps, taskIcon, taskTitle, taskSubtitle) = GetTaskMeta(taskId);
+            progressWindow.SetTaskInfo(taskIcon, taskTitle, taskSubtitle);
+            progressWindow.ProgressBar.Maximum = 100;
+            progressWindow.ProgressBar.IsIndeterminate = false;
+            progressWindow.UpdateProgress(0, "Iniciando...");
 
-            var progress = new Progress<string>(line => UpdateStatus(line));
+            var currentStep = 0;
+            var progress = new Progress<string>(line =>
+            {
+                progressWindow.AppendLog(line);
+            });
+
+            var cts = new CancellationTokenSource();
+            progressWindow.CancelRequested += () => cts.Cancel();
+
+            progressWindow.Show();
 
             int exitCode = -1;
 
             switch (taskId)
             {
                 case "DailyOptimization":
-                    UpdateStatus("Executando limpeza de temporários...");
+                    progressWindow.UpdateProgress(0, "Limpando arquivos temporários...");
+                    currentStep++;
                     exitCode = await _maintenanceEngine.RunTaskAsync(new MaintenanceTask
                     {
                         Id = "TempFiles",
-                        Name = "Limpeza de temporários",
+                        Name = "TempFiles - Limpeza de temporários",
                         Command = @"del /q /f /s ""%TEMP%\*"" & for /d %%x in (""%TEMP%\*"") do @rd /s /q ""%%x""",
                         RequiresRestart = false
                     }, progress);
-                    UpdateStatus("Executando limpeza de disco...");
+
+                    progressWindow.UpdateProgress((double)currentStep / totalSteps * 100, "Executando limpeza de disco...");
+                    currentStep++;
                     var exitCode2 = await _maintenanceEngine.RunTaskAsync(new MaintenanceTask
                     {
                         Id = "DiskCleanup",
-                        Name = "Limpeza de Disco",
+                        Name = "DiskCleanup - Limpeza de Disco",
                         Command = "cleanmgr /sagerun:1",
                         RequiresRestart = false
                     }, progress);
+
+                    _historyService.AddEntry(new HistoryEntry
+                    {
+                        Date = DateTime.Now,
+                        FunctionName = "Otimização Diária",
+                        Command = "DailyOptimization",
+                        Success = exitCode <= 1 && exitCode2 <= 1,
+                        ExitCode = exitCode,
+                        Duration = TimeSpan.Zero
+                    });
+
                     if (exitCode <= 1 && exitCode2 <= 1)
                     {
-                        UpdateStatus("Otimização Diária concluída com sucesso!", 100, false, false);
+                        progressWindow.MarkCompleted(true, "Otimização Diária concluída com sucesso!");
                         _soundService.PlaySuccess();
                         _notificationService.ShowSuccess("Otimização Diária", "Concluída com sucesso!");
                     }
                     else
                     {
-                        UpdateStatus($"Otimização Diária concluída com avisos (código: {exitCode}, {exitCode2})", 100, false, false);
+                        progressWindow.MarkCompleted(false, $"Otimização Diária concluída com avisos (código: {exitCode}, {exitCode2})");
                         _soundService.PlayWarning();
                         _notificationService.ShowWarning("Otimização Diária", $"Concluída com avisos (código: {exitCode}, {exitCode2})");
                     }
                     break;
 
                 case "SystemRepair":
-                    UpdateStatus("Executando reparação do sistema...");
+                    progressWindow.UpdateProgress(0, "Verificando integridade do sistema...");
                     exitCode = await _repairEngine.RunSystemRepairAsync(progress);
+                    currentStep = totalSteps;
+
+                    _historyService.AddEntry(new HistoryEntry
+                    {
+                        Date = DateTime.Now,
+                        FunctionName = "SystemRepair - Reparação do Sistema",
+                        Command = "SystemRepair",
+                        Success = exitCode == 0,
+                        ExitCode = exitCode,
+                        Duration = TimeSpan.Zero
+                    });
                     if (exitCode == 0)
                     {
-                        UpdateStatus("Reparação do Sistema concluída com sucesso!", 100, false, false);
+                        progressWindow.MarkCompleted(true, "Reparação do Sistema concluída com sucesso!");
                         _soundService.PlaySuccess();
                         _notificationService.ShowSuccess("Reparação do Sistema", "Concluída com sucesso!");
                     }
                     else
                     {
-                        UpdateStatus($"Reparação do Sistema concluída com avisos (código: {exitCode})", 100, false, false);
+                        progressWindow.MarkCompleted(false, $"Reparação do Sistema concluída com avisos (código: {exitCode})");
                         _soundService.PlayWarning();
                         _notificationService.ShowWarning("Reparação do Sistema", $"Concluída com avisos (código: {exitCode})");
                     }
                     break;
 
                 case "LightClean":
-                    UpdateStatus("Executando limpeza leve...");
+                    progressWindow.UpdateProgress(0, "Executando limpeza leve...");
                     exitCode = await _maintenanceEngine.RunTaskAsync(new MaintenanceTask
                     {
                         Id = "LightClean",
                         Name = "Limpeza Leve",
-                        Command = "cleanmgr /sageset:1 && cleanmgr /sagerun:1 && DISM /Online /Cleanup-Image /StartComponentCleanup",
+                        Command = "cleanmgr /sagerun:1 && DISM /Online /Cleanup-Image /StartComponentCleanup",
                         RequiresRestart = false
                     }, progress);
+                    currentStep = totalSteps;
                     if (exitCode == 0)
                     {
-                        UpdateStatus("Limpeza Leve concluída com sucesso!", 100, false, false);
+                        progressWindow.MarkCompleted(true, "Limpeza Leve concluída com sucesso!");
                         _soundService.PlaySuccess();
                         _notificationService.ShowSuccess("Limpeza Leve", "Concluída com sucesso!");
                     }
                     else
                     {
-                        UpdateStatus($"Limpeza Leve concluída com avisos (código: {exitCode})", 100, false, false);
+                        progressWindow.MarkCompleted(false, $"Limpeza Leve concluída com avisos (código: {exitCode})");
                         _soundService.PlayWarning();
                         _notificationService.ShowWarning("Limpeza Leve", $"Concluída com avisos (código: {exitCode})");
                     }
                     break;
 
                 case "DeepClean":
-                    UpdateStatus("Executando limpeza profunda...");
+                    progressWindow.UpdateProgress(0, "Executando limpeza profunda...");
                     exitCode = await _deepCleanEngine.RunDeepCleanAsync(progress);
+                    currentStep = totalSteps;
                     if (exitCode == 0)
                     {
-                        UpdateStatus("Limpeza Profunda concluída com sucesso!", 100, false, false);
+                        progressWindow.MarkCompleted(true, "Limpeza Profunda concluída com sucesso!");
                         _soundService.PlaySuccess();
                         _notificationService.ShowSuccess("Limpeza Profunda", "Concluída com sucesso!");
                     }
                     else
                     {
-                        UpdateStatus($"Limpeza Profunda concluída com avisos (código: {exitCode})", 100, false, false);
+                        progressWindow.MarkCompleted(false, $"Limpeza Profunda concluída com avisos (código: {exitCode})");
                         _soundService.PlayWarning();
                         _notificationService.ShowWarning("Limpeza Profunda", $"Concluída com avisos (código: {exitCode})");
                     }
                     break;
 
                 case "RepairLightClean":
-                    UpdateStatus("Executando reparação do sistema...");
+                    progressWindow.UpdateProgress(0, "Executando reparação do sistema...");
                     exitCode = await _repairEngine.RunSystemRepairAsync(progress);
+                    currentStep = 4;
+                    progressWindow.UpdateProgress((double)currentStep / totalSteps * 100, "Executando limpeza leve...");
                     if (exitCode == 0)
                     {
-                        UpdateStatus("Executando limpeza leve...");
                         await _maintenanceEngine.RunTaskAsync(new MaintenanceTask
                         {
                             Id = "LightClean",
                             Name = "Limpeza Leve",
-                            Command = "cleanmgr /sageset:1 && cleanmgr /sagerun:1 && DISM /Online /Cleanup-Image /StartComponentCleanup",
+                            Command = "cleanmgr /sagerun:1 && DISM /Online /Cleanup-Image /StartComponentCleanup",
                             RequiresRestart = false
                         }, progress);
-                        UpdateStatus("Reparação + Limpeza Leve concluída com sucesso!", 100, false, false);
+                        currentStep = totalSteps;
+                        progressWindow.MarkCompleted(true, "Reparação + Limpeza Leve concluída com sucesso!");
                         _soundService.PlaySuccess();
                         _notificationService.ShowSuccess("Reparação + Limpeza Leve", "Concluída com sucesso!");
                     }
                     else
                     {
-                        UpdateStatus($"Reparação concluída com avisos (código: {exitCode})", 100, false, false);
+                        progressWindow.MarkCompleted(false, $"Reparação concluída com avisos (código: {exitCode})");
                         _soundService.PlayWarning();
                         _notificationService.ShowWarning("Reparação + Limpeza Leve", $"Reparação concluída com avisos (código: {exitCode})");
                     }
                     break;
 
                 case "FullRepair":
-                    UpdateStatus("Executando reparação do sistema...");
+                    progressWindow.UpdateProgress(0, "Executando reparação do sistema...");
                     exitCode = await _repairEngine.RunSystemRepairAsync(progress);
+                    currentStep = 4;
                     if (exitCode == 0)
                     {
-                        UpdateStatus("Executando verificação de disco (CHKDSK)...");
+                        progressWindow.UpdateProgress((double)currentStep / totalSteps * 100, "Verificando disco (CHKDSK)...");
                         exitCode = await _repairEngine.RunChkdskAsync(progress);
+                        currentStep = 5;
                         if (exitCode == 0)
                         {
-                            UpdateStatus("Executando limpeza profunda...");
+                            progressWindow.UpdateProgress((double)currentStep / totalSteps * 100, "Executando limpeza profunda...");
                             exitCode = await _deepCleanEngine.RunDeepCleanAsync(progress);
+                            currentStep = totalSteps;
                         }
                     }
                     if (exitCode == 0)
                     {
-                        UpdateStatus("Reparação Completa concluída com sucesso!", 100, false, false);
+                        progressWindow.MarkCompleted(true, "Reparação Completa concluída com sucesso!");
                         _soundService.PlaySuccess();
                         _notificationService.ShowSuccess("Reparação Completa", "Concluída com sucesso!");
                     }
                     else
                     {
-                        UpdateStatus($"Reparação Completa concluída com avisos (código: {exitCode})", 100, false, false);
+                        progressWindow.MarkCompleted(false, $"Reparação Completa concluída com avisos (código: {exitCode})");
                         _soundService.PlayWarning();
                         _notificationService.ShowWarning("Reparação Completa", $"Concluída com avisos (código: {exitCode})");
                     }
@@ -303,7 +348,6 @@ public class MaintenanceViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            UpdateStatus($"Erro: {ex.Message}", 0, false, false);
             _soundService.PlayError();
             _notificationService.ShowError("Erro", $"Ocorreu um erro durante a execução:\n{ex.Message}");
             _logger.Error($"[MaintenanceViewModel] Exceção na tarefa '{taskId}'", ex);
@@ -312,5 +356,19 @@ public class MaintenanceViewModel : ViewModelBase
         {
             _isExecuting = false;
         }
+    }
+
+    private static (int totalSteps, string icon, string title, string subtitle) GetTaskMeta(string taskId)
+    {
+        return taskId switch
+        {
+            "DailyOptimization" => (2, "⭐", "Otimização Diária", "Executando tarefas rápidas de manutenção..."),
+            "SystemRepair" => (4, "🔧", "Reparação do Sistema", "Verificando e reparando arquivos do Windows..."),
+            "LightClean" => (1, "🧹", "Limpeza Leve", "Removendo arquivos temporários..."),
+            "DeepClean" => (3, "🚀", "Limpeza Profunda", "Removendo componentes antigos e temporários..."),
+            "RepairLightClean" => (5, "🛠", "Reparação + Limpeza Leve", "Reparação do sistema e limpeza combinadas..."),
+            "FullRepair" => (8, "⚡", "Reparação Completa", "Reparação, verificação de disco e limpeza profunda..."),
+            _ => (1, "⚙️", "Executando...", "Aguarde...")
+        };
     }
 }

@@ -11,6 +11,22 @@
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>false</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+
+    <!-- Metadados do Executável -->
+    <Version>1.0.0</Version>
+    <Authors>Marcos Vitor</Authors>
+    <Company>Marcos Vitor</Company>
+    <Product>Windows Maintenance Center</Product>
+    <Copyright>Copyright © 2026 Marcos Vitor. Todos os direitos reservados.</Copyright>
+    <Description>Ferramenta completa de manutenção, limpeza e otimização para Windows. Uso não comercial.</Description>
+    <Trademark>Windows Maintenance Center™</Trademark>
+    <PackageLicenseExpression>PolyForm-Noncommercial-1.0</PackageLicenseExpression>
+    <PackageTags>windows;maintenance;cleanup;optimization;wpf;dotnet</PackageTags>
+    <RepositoryUrl>https://github.com/Marcos-Vitor123/WindowsMaintenanceCenter-Publico</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <EmbedUntrackedSources>false</EmbedUntrackedSources>
+    <PublishRepositoryUrl>false</PublishRepositoryUrl>
+    <GenerateAssemblyInformationalVersionAttribute>false</GenerateAssemblyInformationalVersionAttribute>
   </PropertyGroup>
 
   <ItemGroup>
@@ -25,6 +41,9 @@
 
   <ItemGroup>
     <Resource Include="Assets\ico.ico" />
+    <Content Include="Assets\ico.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

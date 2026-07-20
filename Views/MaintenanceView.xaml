@@ -7,7 +7,7 @@
              d:DesignHeight="500" d:DesignWidth="560"
              Background="#f0f0f0">
     
-    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="30,20">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="30,20,30,50">
         <StackPanel>
             <TextBlock Text="Manutenção" FontSize="28" FontWeight="Bold" Foreground="#2c3e50" Margin="0,0,0,5"/>
             <TextBlock Text="Selecione uma opção abaixo para iniciar" FontSize="14" Foreground="#7f8c8d" Margin="0,0,0,30"/>

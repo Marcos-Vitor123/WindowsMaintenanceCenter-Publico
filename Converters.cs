@@ -1,6 +1,8 @@
 using System;
 using System.Globalization;
 using System.Windows.Data;
+using System.Windows;
+using WindowsMaintenanceCenter.ViewModels;
 
 namespace WindowsMaintenanceCenter.Converters
 {
@@ -201,6 +203,51 @@ namespace WindowsMaintenanceCenter.Converters
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+            => throw new NotImplementedException();
+    }
+
+    public class PageSelectedToBackgroundConverter : IMultiValueConverter
+    {
+        public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (values.Length >= 2 && values[0] is PageType currentPage && values[1] is PageType thisPage)
+            {
+                return currentPage == thisPage ? "#3498db" : "Transparent";
+            }
+            return "Transparent";
+        }
+
+        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+            => throw new NotImplementedException();
+    }
+
+    public class PageSelectedToForegroundConverter : IMultiValueConverter
+    {
+        public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (values.Length >= 2 && values[0] is PageType currentPage && values[1] is PageType thisPage)
+            {
+                return currentPage == thisPage ? "White" : "#2c3e50";
+            }
+            return "#2c3e50";
+        }
+
+        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+            => throw new NotImplementedException();
+    }
+
+    public class PageSelectedToWeightConverter : IMultiValueConverter
+    {
+        public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (values.Length >= 2 && values[0] is PageType currentPage && values[1] is PageType thisPage)
+            {
+                return currentPage == thisPage ? FontWeights.Bold : FontWeights.SemiBold;
+            }
+            return FontWeights.SemiBold;
+        }
+
+        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
             => throw new NotImplementedException();
     }
 }

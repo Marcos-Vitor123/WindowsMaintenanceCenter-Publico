@@ -67,11 +67,17 @@ namespace WindowsMaintenanceCenter
                 mainWindow.Top = 100;
             }
 
-            mainWindow.Show();
+            var startMinimized = e.Args.Contains("--minimized", StringComparer.OrdinalIgnoreCase);
 
-            if (e.Args.Contains("--minimized", StringComparer.OrdinalIgnoreCase))
+            if (startMinimized)
             {
+                mainWindow.SetStartedMinimized(true);
+                mainWindow.Show();
                 mainWindow.HideToTray();
+            }
+            else
+            {
+                mainWindow.Show();
             }
 
             logger.Info("MainWindow exibida com sucesso");

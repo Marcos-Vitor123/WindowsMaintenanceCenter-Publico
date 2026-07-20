@@ -14,11 +14,17 @@ namespace WindowsMaintenanceCenter.Views
         private System.Threading.Timer? _notificationTimer;
         private System.Windows.Forms.NotifyIcon? _trayIcon;
         private ConfigService? _configService;
+        private bool _startedMinimized;
 
         public MainWindow()
         {
             InitializeComponent();
             SetupTrayIcon();
+        }
+
+        public void SetStartedMinimized(bool minimized)
+        {
+            _startedMinimized = minimized;
         }
 
         public void SetNotificationService(NotificationService notificationService)
@@ -125,6 +131,8 @@ namespace WindowsMaintenanceCenter.Views
         protected override void OnSourceInitialized(EventArgs e)
         {
             base.OnSourceInitialized(e);
+
+            if (_startedMinimized) return;
 
             if (!IsRunAsAdministrator())
             {

@@ -1,0 +1,83 @@
+using System.Windows;
+using System.Windows.Input;
+
+namespace WindowsMaintenanceCenter.Views;
+
+public partial class TaskProgressWindow : Window
+{
+    public bool WasCancelled { get; private set; }
+    public event Action? CancelRequested;
+
+    public TaskProgressWindow()
+    {
+        InitializeComponent();
+        CancelButton.Click += (_, _) =>
+        {
+            WasCancelled = true;
+            CancelButton.IsEnabled = false;
+            CancelButton.Content = "Cancelando...";
+            StatusText.Text = "Cancelando...";
+            CancelRequested?.Invoke();
+        };
+        CloseButton.Click += (_, _) => Close();
+    }
+
+    public void SetTaskInfo(string icon, string title, string subtitle)
+    {
+        TaskIcon.Text = icon;
+        TaskTitle.Text = title;
+        TaskSubtitle.Text = subtitle;
+    }
+
+    public void UpdateProgress(double value, string statusText)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            ProgressBar.Value = value;
+            ProgressText.Text = $"{(int)value}%";
+            StatusText.Text = statusText;
+        });
+    }
+
+    public void AppendLog(string line)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            if (!string.IsNullOrWhiteSpace(line))
+            {
+                var cleanLine = line.Trim();
+                if (LogBox.Text.Length > 0)
+                    LogBox.Text += Environment.NewLine + cleanLine;
+                else
+                    LogBox.Text = cleanLine;
+
+                LogBox.ScrollToEnd();
+            }
+        });
+    }
+
+    public void MarkCompleted(bool success, string message)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            ProgressBar.IsIndeterminate = false;
+            ProgressBar.Value = success ? 100 : ProgressBar.Value;
+            ProgressText.Text = success ? "100%" : ProgressText.Text;
+            StatusText.Text = message;
+            StatusText.Foreground = success
+                ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(39, 174, 96))
+                : new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(231, 76, 60));
+
+            CancelButton.Visibility = Visibility.Collapsed;
+            CloseButton.Visibility = Visibility.Visible;
+        });
+    }
+
+    private void Window_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
+    {
+        if (!WasCancelled && CloseButton.Visibility != Visibility.Visible)
+        {
+            e.Cancel = true;
+        }
+    }
+}

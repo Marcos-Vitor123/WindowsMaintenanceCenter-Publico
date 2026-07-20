@@ -7,7 +7,7 @@
              d:DesignHeight="500" d:DesignWidth="560"
              Background="#f0f0f0">
     
-    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="30,20">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="30,20,30,50">
         <StackPanel>
             <!-- Header -->
             <TextBlock Text="Windows Maintenance Center" FontSize="28" FontWeight="Bold" Foreground="#2c3e50" Margin="0,0,0,5"/>
