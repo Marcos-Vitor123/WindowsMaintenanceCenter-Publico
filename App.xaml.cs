@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using WindowsMaintenanceCenter.Services;
@@ -11,9 +12,17 @@ namespace WindowsMaintenanceCenter
     public partial class App : Application
     {
         public static IServiceProvider? Services { get; private set; }
+        private Mutex? _mutex;
 
         protected override void OnStartup(StartupEventArgs e)
         {
+            _mutex = new Mutex(true, "WindowsMaintenanceCenter_SingleInstance", out bool createdNew);
+            if (!createdNew)
+            {
+                Shutdown();
+                return;
+            }
+
             if (!CheckRuntime())
             {
                 Shutdown();
@@ -90,6 +99,10 @@ namespace WindowsMaintenanceCenter
 
             var automation = Services?.GetService<AutomationService>();
             automation?.Stop();
+
+            _mutex?.ReleaseMutex();
+            _mutex?.Dispose();
+
             base.OnExit(e);
         }
 

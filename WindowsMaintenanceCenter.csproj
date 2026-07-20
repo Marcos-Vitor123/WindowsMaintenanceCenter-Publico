@@ -41,9 +41,6 @@
 
   <ItemGroup>
     <Resource Include="Assets\ico.ico" />
-    <Content Include="Assets\ico.ico">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
 
 </Project>

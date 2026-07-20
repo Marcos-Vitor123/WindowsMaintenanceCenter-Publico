@@ -15,6 +15,7 @@ namespace WindowsMaintenanceCenter.Views
         private System.Windows.Forms.NotifyIcon? _trayIcon;
         private ConfigService? _configService;
         private bool _startedMinimized;
+        private bool _forceClose;
 
         public MainWindow()
         {
@@ -40,16 +41,22 @@ namespace WindowsMaintenanceCenter.Views
 
         private void SetupTrayIcon()
         {
-            var iconPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "ico.ico");
-            var icon = System.IO.File.Exists(iconPath)
-                ? new Icon(iconPath)
-                : SystemIcons.Application;
+            var icon = SystemIcons.Application;
+
+            try
+            {
+                var uri = new Uri("pack://application:,,,/Assets/ico.ico", UriKind.Absolute);
+                var stream = System.Windows.Application.GetResourceStream(uri);
+                if (stream?.Stream != null)
+                    icon = new Icon(stream.Stream);
+            }
+            catch { }
 
             _trayIcon = new System.Windows.Forms.NotifyIcon
             {
                 Icon = icon,
                 Text = "Windows Maintenance Center",
-                Visible = false
+                Visible = true
             };
 
             var menu = new System.Windows.Forms.ContextMenuStrip();
@@ -66,30 +73,31 @@ namespace WindowsMaintenanceCenter.Views
             Show();
             WindowState = WindowState.Normal;
             Activate();
-            _trayIcon!.Visible = false;
         }
 
         public void HideToTray()
         {
-            _trayIcon!.Visible = true;
+            if (_trayIcon != null)
+                _trayIcon.Visible = true;
             Hide();
         }
 
         protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
         {
-            if (_configService != null && _configService.GetConfig().MinimizeToTray)
+            if (_forceClose)
             {
-                e.Cancel = true;
-                HideToTray();
+                CleanupTray();
+                base.OnClosing(e);
                 return;
             }
 
-            CleanupTray();
-            base.OnClosing(e);
+            e.Cancel = true;
+            HideToTray();
         }
 
         private void CloseForced()
         {
+            _forceClose = true;
             CleanupTray();
             Application.Current.Shutdown();
         }
