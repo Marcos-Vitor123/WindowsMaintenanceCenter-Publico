@@ -1,5 +1,4 @@
 using System.Windows;
-using System.Windows.Input;
 
 namespace WindowsMaintenanceCenter.Views;
 
@@ -41,19 +40,6 @@ public partial class TaskProgressWindow : Window
 
     public void AppendLog(string line)
     {
-        Dispatcher.Invoke(() =>
-        {
-            if (!string.IsNullOrWhiteSpace(line))
-            {
-                var cleanLine = line.Trim();
-                if (LogBox.Text.Length > 0)
-                    LogBox.Text += Environment.NewLine + cleanLine;
-                else
-                    LogBox.Text = cleanLine;
-
-                LogBox.ScrollToEnd();
-            }
-        });
     }
 
     public void MarkCompleted(bool success, string message)
