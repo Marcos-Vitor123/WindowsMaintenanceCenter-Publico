@@ -33,6 +33,34 @@ O WMC foi criado para fornecer aos usuários Windows uma ferramenta centralizada
 
 ---
 
+## Screenshots
+
+<p align="center">
+  <img src="docs/img/01-inicio.png" width="700" alt="Tela Inicial">
+</p>
+
+<p align="center">
+  <img src="docs/img/02-manuntencao.png" width="700" alt="Tela Manutenção">
+</p>
+
+<p align="center">
+  <img src="docs/img/03-diagnóstico.png" width="700" alt="Tela Diagnóstico">
+</p>
+
+<p align="center">
+  <img src="docs/img/04-inicializacao.png" width="700" alt="Tela Inicialização">
+</p>
+
+<p align="center">
+  <img src="docs/img/05-configuracoes.png" width="700" alt="Tela Configurações">
+</p>
+
+<p align="center">
+  <img src="docs/img/06-historico.png" width="700" alt="Tela Histórico">
+</p>
+
+---
+
 ## Funcionalidades
 
 ### Interface (6 Abas)
@@ -124,6 +152,7 @@ WindowsMaintenanceCenter/
 ├── App.xaml / App.xaml.cs              # Ponto de entrada, container DI
 ├── MainWindow.xaml / .cs               # (Não utilizado - scaffold leftover)
 ├── Converters.cs                       # Value converters para data binding
+├── docs/img/                           # Screenshots do programa
 │
 ├── Models/                             # Modelos de dados
 │   ├── AppConfig.cs                    # Configurações do usuário

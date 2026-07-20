@@ -166,7 +166,7 @@ public class MaintenanceViewModel : ViewModelBase
                     {
                         Id = "TempFiles",
                         Name = "Limpeza de temporários",
-                        Command = @"del /q /f /s ""%TEMP%\*"" && for /d %%x in (""%TEMP%\*"") do @rd /s /q ""%%x""",
+                        Command = @"del /q /f /s ""%TEMP%\*"" & for /d %%x in (""%TEMP%\*"") do @rd /s /q ""%%x""",
                         RequiresRestart = false
                     }, progress);
                     UpdateStatus("Executando limpeza de disco...");
@@ -177,7 +177,7 @@ public class MaintenanceViewModel : ViewModelBase
                         Command = "cleanmgr /sagerun:1",
                         RequiresRestart = false
                     }, progress);
-                    if (exitCode == 0 && exitCode2 == 0)
+                    if (exitCode <= 1 && exitCode2 <= 1)
                     {
                         UpdateStatus("Otimização Diária concluída com sucesso!", 100, false, false);
                         _soundService.PlaySuccess();

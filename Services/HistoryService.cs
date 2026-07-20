@@ -7,14 +7,16 @@ namespace WindowsMaintenanceCenter.Services;
 public class HistoryService : ILogger
 {
     private readonly string _logPath;
+    private readonly LoggingService _logger;
     private readonly List<HistoryEntry> _entries = new();
     private readonly object _lock = new();
     private int _nextId = 1;
 
     public IReadOnlyList<HistoryEntry> Entries => _entries.AsReadOnly();
 
-    public HistoryService()
+    public HistoryService(LoggingService logger)
     {
+        _logger = logger;
         var baseDir = AppDomain.CurrentDomain.BaseDirectory;
         var logDir = Path.Combine(baseDir, "Logs");
         Directory.CreateDirectory(logDir);
@@ -29,6 +31,7 @@ public class HistoryService : ILogger
             entry.Id = _nextId++;
             _entries.Insert(0, entry);
             if (_entries.Count > 1000) _entries.RemoveAt(_entries.Count - 1);
+            _logger.Info($"[HistoryService] AddEntry: Id={entry.Id} Nome={entry.FunctionName} Sucesso={entry.Success}, total={_entries.Count}");
             Save();
         }
     }
@@ -37,9 +40,15 @@ public class HistoryService : ILogger
     {
         lock (_lock)
         {
+            _logger.Info($"[HistoryService] DeleteEntry: procurando Id={id}, total antes={_entries.Count}");
             var entry = _entries.FirstOrDefault(e => e.Id == id);
-            if (entry == null) return false;
+            if (entry == null)
+            {
+                _logger.Warn($"[HistoryService] DeleteEntry: entry Id={id} NÃO encontrada!");
+                return false;
+            }
             _entries.Remove(entry);
+            _logger.Info($"[HistoryService] DeleteEntry: entry Id={id} '{entry.FunctionName}' removida, total depois={_entries.Count}");
             Save();
             return true;
         }
@@ -57,6 +66,7 @@ public class HistoryService : ILogger
     { 
         lock (_lock) 
         { 
+            _logger.Info($"[HistoryService] Clear: limpando {_entries.Count} entradas");
             _entries.Clear();
             _nextId = 1;
             Save(); 

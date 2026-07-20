@@ -76,7 +76,7 @@ public class AutomationService
                     {
                         Id = "TempFiles",
                         Name = "Limpeza automática de temporários",
-                        Command = @"del /q /f /s ""%TEMP%\*"" && for /d %%x in (""%TEMP%\*"") do @rd /s /q ""%%x""",
+                        Command = @"del /q /f /s ""%TEMP%\*"" & for /d %%x in (""%TEMP%\*"") do @rd /s /q ""%%x""",
                         RequiresRestart = false
                     });
                     break;

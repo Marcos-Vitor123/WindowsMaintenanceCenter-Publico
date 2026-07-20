@@ -15,7 +15,7 @@
 
         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,20">
             <TextBlock Text="Histórico de Operações" FontSize="28" FontWeight="Bold" Foreground="#2c3e50" VerticalAlignment="Center"/>
-            <Button Content="🗑️ Limpar" Command="{Binding ClearCommand}" 
+            <Button Content="🗑️ Excluir Selecionados" Command="{Binding DeleteSelectedCommand}" 
                     FontSize="12" FontWeight="SemiBold" Foreground="#e74c3c" Background="Transparent"
                     BorderBrush="#e74c3c" BorderThickness="1" Padding="15,6" Cursor="Hand" Margin="20,0,0,0">
                 <Button.Template>
@@ -29,6 +29,25 @@
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="BtnBorder" Property="Background" Value="#fadbd8"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+            <Button Content="🧹 Limpar Tudo" Command="{Binding ClearCommand}" 
+                    FontSize="12" FontWeight="SemiBold" Foreground="#7f8c8d" Background="Transparent"
+                    BorderBrush="#bdc3c7" BorderThickness="1" Padding="15,6" Cursor="Hand" Margin="10,0,0,0">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="BtnBorder" Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="BtnBorder" Property="Background" Value="#ecf0f1"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -65,6 +84,7 @@
                 <!-- Header -->
                 <Grid Grid.Row="0" Background="#f8f9fa" Margin="1,1,1,0">
                     <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="40"/>
                         <ColumnDefinition Width="160"/>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="120"/>
@@ -72,62 +92,53 @@
                         <ColumnDefinition Width="100"/>
                         <ColumnDefinition Width="40"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" Text="DATA/HORA" FontSize="11" FontWeight="Bold" Foreground="#7f8c8d" Padding="15,10"/>
-                    <TextBlock Grid.Column="1" Text="FUNÇÃO EXECUTADA" FontSize="11" FontWeight="Bold" Foreground="#7f8c8d" Padding="15,10"/>
-                    <TextBlock Grid.Column="2" Text="DURAÇÃO" FontSize="11" FontWeight="Bold" Foreground="#7f8c8d" Padding="15,10" TextAlignment="Center"/>
-                    <TextBlock Grid.Column="3" Text="ESPAÇO LIBERADO" FontSize="11" FontWeight="Bold" Foreground="#7f8c8d" Padding="15,10" TextAlignment="Center"/>
-                    <TextBlock Grid.Column="4" Text="RESULTADO" FontSize="11" FontWeight="Bold" Foreground="#7f8c8d" Padding="15,10" TextAlignment="Center"/>
+                    <TextBlock Grid.Column="1" Text="DATA/HORA" FontSize="11" FontWeight="Bold" Foreground="#7f8c8d" Padding="15,10"/>
+                    <TextBlock Grid.Column="2" Text="FUNÇÃO EXECUTADA" FontSize="11" FontWeight="Bold" Foreground="#7f8c8d" Padding="15,10"/>
+                    <TextBlock Grid.Column="3" Text="DURAÇÃO" FontSize="11" FontWeight="Bold" Foreground="#7f8c8d" Padding="15,10" TextAlignment="Center"/>
+                    <TextBlock Grid.Column="4" Text="ESPAÇO LIBERADO" FontSize="11" FontWeight="Bold" Foreground="#7f8c8d" Padding="15,10" TextAlignment="Center"/>
+                    <TextBlock Grid.Column="5" Text="RESULTADO" FontSize="11" FontWeight="Bold" Foreground="#7f8c8d" Padding="15,10" TextAlignment="Center"/>
                 </Grid>
 
                 <!-- List -->
                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                    <ItemsControl ItemsSource="{Binding Entries}">
+                    <ItemsControl x:Name="HistoryItemsControl" ItemsSource="{Binding Entries}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Border BorderBrush="#e0e0e0" BorderThickness="0,1,0,0" Margin="1">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="40"/>
                                             <ColumnDefinition Width="160"/>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="120"/>
                                             <ColumnDefinition Width="120"/>
                                             <ColumnDefinition Width="100"/>
-                                            <ColumnDefinition Width="40"/>
+                                            <ColumnDefinition Width="50"/>
                                         </Grid.ColumnDefinitions>
                                         
-                                        <TextBlock Grid.Column="0" Text="{Binding Date, StringFormat='{}{0:dd/MM/yyyy HH:mm:ss}'}" 
+                                        <CheckBox Grid.Column="0" IsChecked="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}"
+                                                  HorizontalAlignment="Center" VerticalAlignment="Center" Cursor="Hand"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding Date, StringFormat='{}{0:dd/MM/yyyy HH:mm:ss}'}" 
                                                    FontSize="12" Foreground="#2c3e50" Padding="15,8" VerticalAlignment="Center"/>
-                                        <TextBlock Grid.Column="1" Text="{Binding FunctionName}" 
+                                        <TextBlock Grid.Column="2" Text="{Binding FunctionName}" 
                                                    FontSize="12" FontWeight="Medium" Foreground="#2c3e50" Padding="15,8" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-                                        <TextBlock Grid.Column="2" Text="{Binding Duration, StringFormat='{}{0:mm\\:ss}'}" 
+                                        <TextBlock Grid.Column="3" Text="{Binding Duration, StringFormat='{}{0:mm\\:ss}'}" 
                                                    FontSize="12" Foreground="#7f8c8d" Padding="15,8" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        <TextBlock Grid.Column="3" Text="{Binding SpaceFreedBytes, Converter={StaticResource BytesToStringConverter}}" 
+                                        <TextBlock Grid.Column="4" Text="{Binding SpaceFreedBytes, Converter={StaticResource BytesToStringConverter}}" 
                                                    FontSize="12" Foreground="#7f8c8d" Padding="15,8" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        <StackPanel Grid.Column="4" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <StackPanel Grid.Column="5" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding Success, Converter={StaticResource BoolToResultIconConverter}}" FontSize="14"/>
                                             <TextBlock Text="{Binding Success, Converter={StaticResource BoolToResultTextConverter}}" 
                                                        FontSize="12" FontWeight="Medium" Foreground="{Binding Success, Converter={StaticResource BoolToResultColorConverter}}" Margin="5,0,0,0"/>
                                         </StackPanel>
-                                        <Button Grid.Column="5" Content="✕" 
+                                        <Button Grid.Column="6" Content="✕" 
                                                 Command="{Binding DataContext.DeleteEntryCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                                 CommandParameter="{Binding}"
-                                                FontSize="12" Foreground="#e74c3c" Background="Transparent"
-                                                BorderThickness="0" Padding="5,2" Cursor="Hand"
+                                                FontSize="14" FontWeight="Bold" Foreground="White" Background="#e74c3c"
+                                                BorderThickness="0" Padding="0" Cursor="Hand"
+                                                Width="28" Height="28"
                                                 HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                ToolTip="Excluir este registro">
-                                            <Button.Template>
-                                                <ControlTemplate TargetType="Button">
-                                                    <Border x:Name="BtnBorder" Background="{TemplateBinding Background}" CornerRadius="4" Padding="2">
-                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                    </Border>
-                                                    <ControlTemplate.Triggers>
-                                                        <Trigger Property="IsMouseOver" Value="True">
-                                                            <Setter TargetName="BtnBorder" Property="Background" Value="#fadbd8"/>
-                                                        </Trigger>
-                                                    </ControlTemplate.Triggers>
-                                                </ControlTemplate>
-                                            </Button.Template>
-                                        </Button>
+                                                ToolTip="Excluir este registro"/>
                                     </Grid>
                                 </Border>
                             </DataTemplate>

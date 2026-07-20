@@ -41,7 +41,7 @@ public class MaintenanceEngine
 
             var exitCode = await ExecuteCommandAsync(task.Command, progress);
 
-            entry.Success = exitCode == 0;
+            entry.Success = exitCode == 0 || exitCode == 1;
             entry.ExitCode = exitCode;
             entry.Duration = DateTime.Now - startTime;
             entry.SpaceFreedBytes = EstimateSpaceFreed(task.Id, exitCode);
@@ -49,7 +49,7 @@ public class MaintenanceEngine
             _historyService.AddEntry(entry);
             TaskCompleted?.Invoke(task, exitCode);
 
-            if (exitCode == 0)
+            if (exitCode == 0 || exitCode == 1)
             {
                 _soundService.PlayComplete();
                 progress?.Report($"✅ {task.Name} concluído com sucesso!");
@@ -130,7 +130,7 @@ public class MaintenanceEngine
 
     private long EstimateSpaceFreed(string taskId, int exitCode)
     {
-        if (exitCode != 0) return 0;
+        if (exitCode != 0 && exitCode != 1) return 0;
         return taskId switch
         {
             "TempFiles" => 500 * 1024 * 1024,

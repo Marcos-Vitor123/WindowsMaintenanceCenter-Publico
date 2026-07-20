@@ -158,7 +158,7 @@ public class MainViewModel : ViewModelBase
             PageType.Diagnostics => new DiagnosticsViewModel(_diagnosticService),
             PageType.Startup => new StartupViewModel(_startupManager),
             PageType.Settings => new SettingsViewModel(_configService, _notificationService, _logger),
-            PageType.History => new HistoryViewModel(_historyService, _notificationService),
+            PageType.History => new HistoryViewModel(_historyService, _notificationService, _logger),
             _ => new HomeViewModel(_diagnosticService, _configService, _historyService, this)
         };
     }
@@ -198,4 +198,6 @@ public class RelayCommand : ICommand
     public void Execute(object? parameter) => _execute();
 
     public event EventHandler? CanExecuteChanged;
+
+    public void RaiseCanExecuteChanged() => CanExecuteChanged?.Invoke(this, EventArgs.Empty);
 }
