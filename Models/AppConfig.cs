@@ -8,6 +8,8 @@ public class AppConfig
     public bool ShowNotifications { get; set; } = true;
     public bool AutoMode { get; set; } = false;
 
+    public List<string> SelectedDrives { get; set; } = new() { "C:" };
+
     public Dictionary<string, TaskSchedule> TaskSchedules { get; set; } = new()
     {
         ["TempFiles"] = new TaskSchedule { Enabled = true, IntervalDays = 1 },

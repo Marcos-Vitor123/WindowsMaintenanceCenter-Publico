@@ -42,6 +42,7 @@ namespace WindowsMaintenanceCenter
             services.AddSingleton<LoggingService>();
             services.AddSingleton<MaintenanceEngine>();
             services.AddSingleton<SystemRepairEngine>();
+            services.AddSingleton<DiskCleanupService>();
             services.AddSingleton<DeepCleanEngine>();
             services.AddSingleton<AutomationService>();
 

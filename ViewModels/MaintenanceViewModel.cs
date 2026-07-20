@@ -12,6 +12,7 @@ public class MaintenanceViewModel : ViewModelBase
     private readonly MaintenanceEngine _maintenanceEngine;
     private readonly SystemRepairEngine _repairEngine;
     private readonly DeepCleanEngine _deepCleanEngine;
+    private readonly DiskCleanupService _diskCleanupService;
     private readonly NotificationService _notificationService;
     private readonly SoundService _soundService;
     private readonly ConfigService _configService;
@@ -28,6 +29,7 @@ public class MaintenanceViewModel : ViewModelBase
         MaintenanceEngine maintenanceEngine,
         SystemRepairEngine repairEngine,
         DeepCleanEngine deepCleanEngine,
+        DiskCleanupService diskCleanupService,
         NotificationService notificationService,
         SoundService soundService,
         ConfigService configService,
@@ -38,6 +40,7 @@ public class MaintenanceViewModel : ViewModelBase
         _maintenanceEngine = maintenanceEngine;
         _repairEngine = repairEngine;
         _deepCleanEngine = deepCleanEngine;
+        _diskCleanupService = diskCleanupService;
         _notificationService = notificationService;
         _soundService = soundService;
         _configService = configService;
@@ -186,13 +189,11 @@ public class MaintenanceViewModel : ViewModelBase
 
                     progressWindow.UpdateProgress((double)currentStep / totalSteps * 100, "Executando limpeza de disco...");
                     currentStep++;
-                    var exitCode2 = await _maintenanceEngine.RunTaskAsync(new MaintenanceTask
-                    {
-                        Id = "DiskCleanup",
-                        Name = "DiskCleanup - Limpeza de Disco",
-                        Command = "cleanmgr /sagerun:1",
-                        RequiresRestart = false
-                    }, progress);
+                    var config = _configService.GetConfig();
+                    var drives = config.SelectedDrives?.Count > 0
+                        ? config.SelectedDrives
+                        : new List<string> { "C:" };
+                    var exitCode2 = await _diskCleanupService.RunCleanMgrForDrivesAsync(drives, progress);
 
                     _historyService.AddEntry(new HistoryEntry
                     {
@@ -247,14 +248,25 @@ public class MaintenanceViewModel : ViewModelBase
                     break;
 
                 case "LightClean":
-                    progressWindow.UpdateProgress(0, "Executando limpeza leve...");
-                    exitCode = await _maintenanceEngine.RunTaskAsync(new MaintenanceTask
+                    progressWindow.UpdateProgress(0, "Executando limpeza de disco...");
                     {
-                        Id = "LightClean",
-                        Name = "Limpeza Leve",
-                        Command = "cleanmgr /sagerun:1 && DISM /Online /Cleanup-Image /StartComponentCleanup",
-                        RequiresRestart = false
-                    }, progress);
+                        var lcConfig = _configService.GetConfig();
+                        var lcDrives = lcConfig.SelectedDrives?.Count > 0
+                            ? lcConfig.SelectedDrives
+                            : new List<string> { "C:" };
+                        exitCode = await _diskCleanupService.RunCleanMgrForDrivesAsync(lcDrives, progress);
+                    }
+                    progressWindow.UpdateProgress(50, "Executando limpeza de componentes...");
+                    {
+                        var dismExit = await _maintenanceEngine.RunTaskAsync(new MaintenanceTask
+                        {
+                            Id = "LightClean",
+                            Name = "Limpeza Leve - DISM",
+                            Command = "DISM /Online /Cleanup-Image /StartComponentCleanup",
+                            RequiresRestart = false
+                        }, progress);
+                        if (dismExit != 0) exitCode = dismExit;
+                    }
                     currentStep = totalSteps;
                     if (exitCode == 0)
                     {
@@ -295,11 +307,20 @@ public class MaintenanceViewModel : ViewModelBase
                     progressWindow.UpdateProgress((double)currentStep / totalSteps * 100, "Executando limpeza leve...");
                     if (exitCode == 0)
                     {
+                        progressWindow.UpdateProgress((double)currentStep / totalSteps * 100, "Executando limpeza de disco...");
+                        {
+                            var rlcConfig = _configService.GetConfig();
+                            var rlcDrives = rlcConfig.SelectedDrives?.Count > 0
+                                ? rlcConfig.SelectedDrives
+                                : new List<string> { "C:" };
+                            await _diskCleanupService.RunCleanMgrForDrivesAsync(rlcDrives, progress);
+                        }
+                        progressWindow.UpdateProgress((double)(currentStep + 1) / totalSteps * 100, "Executando limpeza de componentes...");
                         await _maintenanceEngine.RunTaskAsync(new MaintenanceTask
                         {
                             Id = "LightClean",
-                            Name = "Limpeza Leve",
-                            Command = "cleanmgr /sagerun:1 && DISM /Online /Cleanup-Image /StartComponentCleanup",
+                            Name = "Limpeza Leve - DISM",
+                            Command = "DISM /Online /Cleanup-Image /StartComponentCleanup",
                             RequiresRestart = false
                         }, progress);
                         currentStep = totalSteps;

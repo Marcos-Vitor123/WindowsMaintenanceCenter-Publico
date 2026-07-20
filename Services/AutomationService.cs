@@ -11,6 +11,7 @@ public class AutomationService
     private readonly MaintenanceEngine _maintenanceEngine;
     private readonly SystemRepairEngine _repairEngine;
     private readonly DeepCleanEngine _deepCleanEngine;
+    private readonly DiskCleanupService _diskCleanupService;
     private Timer? _checkTimer;
 
     public AutomationService(
@@ -18,13 +19,15 @@ public class AutomationService
         HistoryService historyService,
         MaintenanceEngine maintenanceEngine,
         SystemRepairEngine repairEngine,
-        DeepCleanEngine deepCleanEngine)
+        DeepCleanEngine deepCleanEngine,
+        DiskCleanupService diskCleanupService)
     {
         _configService = configService;
         _historyService = historyService;
         _maintenanceEngine = maintenanceEngine;
         _repairEngine = repairEngine;
         _deepCleanEngine = deepCleanEngine;
+        _diskCleanupService = diskCleanupService;
     }
 
     public void Start()
@@ -81,13 +84,11 @@ public class AutomationService
                     });
                     break;
                 case "DiskCleanup":
-                    await _maintenanceEngine.RunTaskAsync(new MaintenanceTask
-                    {
-                        Id = "DiskCleanup",
-                        Name = "Limpeza de Disco automática",
-                        Command = "cleanmgr /sagerun:1",
-                        RequiresRestart = false
-                    });
+                    var dcConfig = _configService.GetConfig();
+                    var dcDrives = dcConfig.SelectedDrives?.Count > 0
+                        ? dcConfig.SelectedDrives
+                        : new List<string> { "C:" };
+                    await _diskCleanupService.RunCleanMgrForDrivesAsync(dcDrives);
                     break;
                 case "SystemRepair":
                     await _repairEngine.RunSystemRepairAsync();

@@ -10,6 +10,8 @@
     
     <UserControl.Resources>
         <conv:TaskKeyToNameConverter x:Key="TaskKeyToNameConverter"/>
+        <conv:InverseBoolConverter x:Key="InverseBoolConverter"/>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
     </UserControl.Resources>
     
     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="30,20,30,50">
@@ -107,6 +109,42 @@
                                                 </TextBox.Template>
                                             </TextBox>
                                             <TextBlock Text="dias" FontSize="12" Foreground="#7f8c8d" VerticalAlignment="Center" Margin="5,0,0,0"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <!-- Discos para Limpeza -->
+            <Border Background="White" CornerRadius="12" Padding="25" Margin="0,0,0,20" BorderBrush="#e0e0e0" BorderThickness="1">
+                <StackPanel>
+                    <TextBlock Text="Discos para Limpeza" FontSize="18" FontWeight="Bold" Foreground="#2c3e50" Margin="0,0,0,10"/>
+                    <TextBlock Text="Selecione quais discos serão incluídos nas operações de limpeza de disco" FontSize="12" Foreground="#7f8c8d" Margin="0,0,0,20"/>
+
+                    <ItemsControl ItemsSource="{Binding AvailableDrives}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Margin="0,0,0,10" Padding="15" Background="#f8f9fa" CornerRadius="8">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="30"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <CheckBox Grid.Column="0" IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                  IsEnabled="{Binding IsReadOnly, Converter={StaticResource InverseBoolConverter}}"
+                                                  VerticalAlignment="Center" HorizontalAlignment="Center"/>
+
+                                        <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding DisplayText}"
+                                                       FontSize="13" FontWeight="Medium" Foreground="#2c3e50"/>
+                                            <TextBlock FontSize="11" Foreground="#e67e22" Margin="0,2,0,0"
+                                                       Visibility="{Binding IsSystemDrive, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                ⚠ Sempre incluído — disco do sistema
+                                            </TextBlock>
                                         </StackPanel>
                                     </Grid>
                                 </Border>

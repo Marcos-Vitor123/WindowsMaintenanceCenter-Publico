@@ -31,6 +31,7 @@ public class MainViewModel : ViewModelBase
     private readonly DeepCleanEngine _deepCleanEngine;
     private readonly StartupManager _startupManager;
     private readonly LoggingService _logger;
+    private readonly DiskCleanupService _diskCleanupService;
 
     private PageType _currentPage = PageType.Home;
     private ViewModelBase? _currentViewModel;
@@ -96,6 +97,7 @@ public class MainViewModel : ViewModelBase
         MaintenanceEngine maintenanceEngine,
         SystemRepairEngine repairEngine,
         DeepCleanEngine deepCleanEngine,
+        DiskCleanupService diskCleanupService,
         StartupManager startupManager,
         LoggingService logger)
     {
@@ -108,6 +110,7 @@ public class MainViewModel : ViewModelBase
         _maintenanceEngine = maintenanceEngine;
         _repairEngine = repairEngine;
         _deepCleanEngine = deepCleanEngine;
+        _diskCleanupService = diskCleanupService;
         _startupManager = startupManager;
         _logger = logger;
 
@@ -147,7 +150,7 @@ public class MainViewModel : ViewModelBase
         CurrentViewModel = page switch
         {
             PageType.Home => new HomeViewModel(_diagnosticService, _configService, _historyService, this),
-            PageType.Maintenance => new MaintenanceViewModel(_maintenanceEngine, _repairEngine, _deepCleanEngine, _notificationService, _soundService, _configService, _historyService, _logger,
+            PageType.Maintenance => new MaintenanceViewModel(_maintenanceEngine, _repairEngine, _deepCleanEngine, _diskCleanupService, _notificationService, _soundService, _configService, _historyService, _logger,
                 (text, progress, running, indeterminate) =>
                 {
                     StatusText = text;

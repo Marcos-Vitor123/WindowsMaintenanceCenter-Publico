@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.IO;
 using WindowsMaintenanceCenter.Models;
 
 namespace WindowsMaintenanceCenter.Services;
@@ -9,16 +8,21 @@ public class DeepCleanEngine
     private readonly HistoryService _historyService;
     private readonly SoundService _soundService;
     private readonly LoggingService _logger;
+    private readonly DiskCleanupService _diskCleanupService;
+    private readonly ConfigService _configService;
 
     public event Action<string, int>? TaskProgress;
     public event Action<string>? TaskCompleted;
     public event Action<string>? TaskError;
 
-    public DeepCleanEngine(HistoryService historyService, SoundService soundService, LoggingService logger)
+    public DeepCleanEngine(HistoryService historyService, SoundService soundService, LoggingService logger,
+        DiskCleanupService diskCleanupService, ConfigService configService)
     {
         _historyService = historyService;
         _soundService = soundService;
         _logger = logger;
+        _diskCleanupService = diskCleanupService;
+        _configService = configService;
     }
 
     public async Task<int> RunDeepCleanAsync(IProgress<string>? progress = null)
@@ -28,57 +32,70 @@ public class DeepCleanEngine
         {
             Date = startTime,
             FunctionName = "Limpeza Profunda + Imagens Antigas",
-            Command = "cleanmgr /sagerun:1 && DISM /StartComponentCleanup /ResetBase"
+            Command = "cleanmgr + DISM /StartComponentCleanup /ResetBase"
         };
 
         _logger.Info("[DeepCleanEngine] Iniciando limpeza profunda");
 
-        var commands = new[]
-        {
-            ("Configurar Limpeza", "cleanmgr /sageset:1"),
-            ("Executar Limpeza", "cleanmgr /sagerun:1"),
-            ("Limpeza Componentes (ResetBase)", "DISM /Online /Cleanup-Image /StartComponentCleanup /ResetBase")
-        };
+        var config = _configService.GetConfig();
+        var selectedDrives = config.SelectedDrives?.Count > 0
+            ? config.SelectedDrives
+            : new List<string> { "C:" };
 
         int lastExitCode = 0;
 
         try
         {
-            foreach (var (name, cmd) in commands)
+            progress?.Report("Configurando limpeza de disco...");
+            _diskCleanupService.ConfigureSagesetSilently();
+
+            foreach (var drive in selectedDrives)
             {
-                progress?.Report($"Executando: {name}");
-                TaskProgress?.Invoke(name, 0);
-                _logger.Info($"[DeepCleanEngine] Executando: {name} | Comando: {cmd}");
-
-                var exitCode = await ExecuteCommandAsync(cmd, progress);
-                lastExitCode = exitCode;
-
+                progress?.Report($"Executando limpeza no disco {drive}...");
+                var exitCode = await ExecuteCommandAsync($"cleanmgr /sagerun:1 /D {drive}", progress);
                 if (exitCode != 0)
                 {
-                    progress?.Report($"⚠️ {name} retornou código {exitCode}");
-                    _logger.Warn($"[DeepCleanEngine] {name} retornou código {exitCode}");
+                    progress?.Report($"Aviso: limpeza {drive} retornou código {exitCode}");
+                    _logger.Warn($"[DeepCleanEngine] Limpeza {drive} retornou código {exitCode}");
                 }
                 else
                 {
-                    progress?.Report($"✅ {name} concluído");
-                    _logger.Info($"[DeepCleanEngine] {name} concluído com sucesso");
+                    progress?.Report($"Limpeza {drive} concluída");
+                    _logger.Info($"[DeepCleanEngine] Limpeza {drive} concluída");
                 }
+                lastExitCode = exitCode;
             }
 
-            entry.Success = lastExitCode == 0;
-            entry.ExitCode = lastExitCode;
+            progress?.Report("Executando limpeza de componentes (ResetBase)...");
+            _logger.Info("[DeepCleanEngine] Executando DISM ResetBase");
+            var dismExit = await ExecuteCommandAsync(
+                "DISM /Online /Cleanup-Image /StartComponentCleanup /ResetBase", progress);
+
+            if (dismExit != 0)
+            {
+                progress?.Report($"Aviso: DISM retornou código {dismExit}");
+                _logger.Warn($"[DeepCleanEngine] DISM retornou código {dismExit}");
+            }
+            else
+            {
+                progress?.Report("Limpeza de componentes concluída");
+                _logger.Info("[DeepCleanEngine] DISM ResetBase concluído");
+            }
+
+            entry.Success = lastExitCode == 0 && dismExit == 0;
+            entry.ExitCode = dismExit != 0 ? dismExit : lastExitCode;
             entry.Duration = DateTime.Now - startTime;
-            entry.SpaceFreedBytes = 2L * 1024 * 1024 * 1024; // ~2GB estimate
+            entry.SpaceFreedBytes = 2L * 1024 * 1024 * 1024;
             _historyService.AddEntry(entry);
             TaskCompleted?.Invoke("Limpeza Profunda concluída");
 
-            if (lastExitCode == 0)
+            if (entry.Success)
                 _soundService.PlayComplete();
             else
                 _soundService.PlayWarning();
 
-            _logger.Info($"[DeepCleanEngine] Limpeza profunda concluída (exit={lastExitCode}, duração={entry.Duration.TotalSeconds:F1}s)");
-            return lastExitCode;
+            _logger.Info($"[DeepCleanEngine] Limpeza profunda concluída (exit={entry.ExitCode}, duração={entry.Duration.TotalSeconds:F1}s)");
+            return entry.ExitCode;
         }
         catch (Exception ex)
         {
