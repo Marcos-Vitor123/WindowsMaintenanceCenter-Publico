@@ -35,6 +35,34 @@ O WMC foi criado para fornecer aos usuários Windows uma ferramenta centralizada
 
 ---
 
+## Como Baixar e Usar
+
+### Para quem quer apenas usar o programa
+
+1. Acesse a página de **[Releases](https://github.com/Marcos-Vitor123/WindowsMaintenanceCenter-Publico/releases)**
+2. Baixe o arquivo `WindowsMaintenanceCenter.exe` da versão mais recente
+3. Coloque o `.exe` em uma pasta de sua preferência (ex: `C:\Programas\WMC\`)
+4. Clique com o botão direito → **Executar como administrador** (obrigatório para funcionar corretamente)
+
+> **Importante:** O programa precisa de permissões de administrador para executar as tarefas de manutenção (DISM, SFC, limpeza de disco, etc.). Sem essas permissões, várias funcionalidades não funcionarão.
+
+> **O .NET 10.0 Runtime** precisa estar instalado no seu computador. Se não tiver, baixe em [https://dotnet.microsoft.com/download/dotnet/10.0](https://dotnet.microsoft.com/download/dotnet/10.0) (selecione ".NET Desktop Runtime").
+
+### Primeira execução
+
+- Ao abrir, o programa pede confirmação de administração
+- O ícone aparece na **bandeja do sistema** (ao lado do relógio)
+- Para restaurar a janela, dê duplo-clique no ícone da bandeja
+- Botão direito no ícone da bandeja: "Abrir" ou "Sair"
+
+### Dicas
+
+- Você pode colocar o `.exe` em qualquer pasta — ele cria as pastas `Config/` e `Logs/` automaticamente ao lado do executável
+- Para iniciar automaticamente com o Windows, ative em **Configurações → Iniciar com o Windows**
+- Para usar o programa sem abrir a janela, ative **Configurações → Minimizar para bandeja**
+
+---
+
 ## Screenshots
 
 <p align="center">
@@ -90,10 +118,10 @@ O WMC foi criado para fornecer aos usuários Windows uma ferramenta centralizada
 
 | Tarefa | Descrição | Comandos Utilizados |
 |--------|-----------|---------------------|
-| **Otimização Diária** | Limpeza rápida de arquivos temporários | `del /q /f /s %TEMP%\*` + `cleanmgr /sagerun:1` |
+| **Otimização Diária** | Limpeza rápida de arquivos temporários | `del /q /f /s %TEMP%\*` + Limpeza de disco direta |
 | **Reparação do Sistema** | Verificação e reparo de integridade | DISM CheckHealth, ScanHealth, RestoreHealth + `sfc /scannow` |
-| **Limpeza Leve** | Limpeza de sistema + componentes | `cleanmgr /sageset:1` + DISM StartComponentCleanup |
-| **Limpeza Profunda** | Limpeza máxima com ResetBase | `cleanmgr /sagerun:1` + DISM StartComponentCleanup `/ResetBase` |
+| **Limpeza Leve** | Limpeza de sistema + componentes | Limpeza de disco direta + DISM StartComponentCleanup |
+| **Limpeza Profunda** | Limpeza máxima com ResetBase | Limpeza de disco profunda + DISM StartComponentCleanup `/ResetBase` |
 | **Reparação + Limpeza Leve** | Reparo seguido de limpeza | Pipeline de reparo + Limpeza Leve |
 | **Reparação Completa** | Manutenção total do sistema | Reparo + CHKDSK + Limpeza Profunda |
 
@@ -103,7 +131,7 @@ O projeto conta com **11 serviços** especializados que executam as operações 
 
 - **MaintenanceEngine** - Executor genérico de comandos de manutenção via `cmd.exe`
 - **SystemRepairEngine** - Pipeline completo de reparo (DISM + SFC + CHKDSK)
-- **DeepCleanEngine** - Motor de limpeza profunda com cleanmgr e DISM ResetBase
+- **DeepCleanEngine** - Motor de limpeza profunda com limpeza direta de disco e DISM ResetBase
 - **DiagnosticService** - Coleta de informações do sistema via WMI (Win32_OperatingSystem, Win32_ComputerSystem)
 - **StartupManager** - Gerenciamento de programas de inicialização via Registro (HKLM/HKCU Run) + auto-start do WMC
 - **AutomationService** - Timer para execução automática de tarefas agendadas
