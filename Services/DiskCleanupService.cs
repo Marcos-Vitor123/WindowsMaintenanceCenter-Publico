@@ -1,15 +1,10 @@
 using System.Diagnostics;
 using System.IO;
-using Microsoft.Win32;
 
 namespace WindowsMaintenanceCenter.Services;
 
 public class DiskCleanupService
 {
-    private const string VolumeCachesPath = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches";
-    private const int StateFlagsChecked = 2;
-    private const int SagesetNumber = 1;
-
     private readonly LoggingService _logger;
 
     public DiskCleanupService(LoggingService logger)
@@ -17,92 +12,112 @@ public class DiskCleanupService
         _logger = logger;
     }
 
-    public List<DriveInfo> GetAvailableDrives()
+    public List<string> GetAvailableDrives()
     {
         return DriveInfo.GetDrives()
-            .Where(d => d.DriveType is DriveType.Fixed or DriveType.Removable
+            .Where(d => d.DriveType == DriveType.Fixed
                      && d.IsReady
                      && d.Name.Length == 3)
-            .OrderBy(d => d.Name)
+            .Select(d => d.Name.TrimEnd('\\').ToUpper())
+            .OrderBy(d => d)
             .ToList();
     }
 
-    public void ConfigureSagesetSilently()
-    {
-        try
-        {
-            using var baseKey = Registry.LocalMachine.OpenSubKey(VolumeCachesPath, writable: true);
-            if (baseKey == null)
-            {
-                _logger.Warn("[DiskCleanupService] VolumeCaches registry key not found");
-                return;
-            }
-
-            foreach (var subKeyName in baseKey.GetSubKeyNames())
-            {
-                using var subKey = baseKey.OpenSubKey(subKeyName, writable: true);
-                if (subKey == null) continue;
-
-                var valueName = $"StateFlags{SagesetNumber:D4}";
-                subKey.SetValue(valueName, StateFlagsChecked, RegistryValueKind.DWord);
-            }
-
-            _logger.Info("[DiskCleanupService] Sageset configurado silenciosamente via registro");
-        }
-        catch (Exception ex)
-        {
-            _logger.Error("[DiskCleanupService] Erro ao configurar sageset no registro", ex);
-        }
-    }
-
-    public string BuildCleanMgrCommand(List<string> selectedDrives)
+    public async Task<int> RunCleanupForDrivesAsync(List<string> selectedDrives, IProgress<string>? progress = null)
     {
         if (selectedDrives.Count == 0)
             selectedDrives = new List<string> { "C:" };
 
-        var firstDrive = selectedDrives[0];
-        var rest = selectedDrives.Skip(1)
-            .Select(d => $" && cleanmgr /sagerun:{SagesetNumber} /D {d}")
-            .FirstOrDefault() ?? "";
-
-        return $"cleanmgr /sagerun:{SagesetNumber} /D {firstDrive}{rest}";
-    }
-
-    public async Task<int> RunCleanMgrForDrivesAsync(List<string> selectedDrives, IProgress<string>? progress = null)
-    {
-        ConfigureSagesetSilently();
-
         int lastExit = 0;
         foreach (var drive in selectedDrives)
         {
-            var cmd = $"cleanmgr /sagerun:{SagesetNumber} /D {drive}";
-            progress?.Report($"Executando limpeza de disco no {drive}...");
-            _logger.Info($"[DiskCleanupService] Executando: {cmd}");
+            progress?.Report($"Limpando disco {drive}...");
+            _logger.Info($"[DiskCleanupService] Iniciando limpeza no disco {drive}");
 
-            lastExit = await RunCommandAsync(cmd);
-            progress?.Report($"Limpeza {drive} concluída (código: {lastExit})");
+            lastExit = await RunDriveCleanupAsync(drive, progress);
+            _logger.Info($"[DiskCleanupService] Limpeza {drive} concluída (exit: {lastExit})");
         }
+
         return lastExit;
     }
 
-    private async Task<int> RunCommandAsync(string command)
+    private async Task<int> RunDriveCleanupAsync(string drive, IProgress<string>? progress)
     {
-        var startInfo = new ProcessStartInfo
+        var driveLetter = drive.TrimEnd('\\');
+        var exitCode = 0;
+
+        var tempPaths = new[]
         {
-            FileName = "cmd.exe",
-            Arguments = $"/c {command}",
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            StandardOutputEncoding = System.Text.Encoding.UTF8,
-            StandardErrorEncoding = System.Text.Encoding.UTF8,
-            WindowStyle = ProcessWindowStyle.Hidden
+            $@"{driveLetter}\Windows\Temp",
+            $@"{driveLetter}\Windows\Prefetch",
+            $@"%TEMP%",
+            $@"%LOCALAPPDATA%\Temp",
+            $@"%LOCALAPPDATA%\Microsoft\Windows\INetCache",
+            $@"%LOCALAPPDATA%\Microsoft\Windows\Explorer",
+            $@"%LOCALAPPDATA%\CrashDumps",
+            $@"%LOCALAPPDATA%\D3DSCache",
+            $@"%LOCALAPPDATA%\NuGet",
+            $@"%LOCALAPPDATA%\pip\cache",
+            $@"%USERPROFILE%\AppData\Local\Microsoft\Windows\WER"
         };
 
-        using var process = new Process { StartInfo = startInfo };
-        process.Start();
-        await process.WaitForExitAsync();
-        return process.ExitCode;
+        var cleanupCommands = new List<string>();
+
+        foreach (var path in tempPaths)
+        {
+            cleanupCommands.Add($@"del /q /f /s ""{path}\*"" 2>nul");
+            cleanupCommands.Add($@"for /d %%x in (""{path}\*"") do @rd /s /q ""%%x"" 2>nul");
+        }
+
+        cleanupCommands.Add($@"del /q /f /s ""{driveLetter}\Windows\SoftwareDistribution\Download\*"" 2>nul");
+        cleanupCommands.Add($@"for /d %%x in (""{driveLetter}\Windows\SoftwareDistribution\Download\*"") do @rd /s /q ""%%x"" 2>nul");
+
+        cleanupCommands.Add($@"del /q /f /s ""{driveLetter}\Windows\Installer\*.tmp"" 2>nul");
+
+        cleanupCommands.Add($@"del /q /f /s ""{driveLetter}\Windows\Logs\CBS\*.log"" 2>nul");
+        cleanupCommands.Add($@"del /q /f /s ""{driveLetter}\Windows\Logs\DISM\*.log"" 2>nul");
+        cleanupCommands.Add($@"del /q /f /s ""{driveLetter}\Windows\Logs\WindowsUpdate\*.log"" 2>nul");
+
+        cleanupCommands.Add($@"del /q /f /s ""{driveLetter}\Windows\Minidump\*.dmp"" 2>nul");
+        cleanupCommands.Add($@"del /q /f /s ""{driveLetter}\Windows\MEMORY.DMP"" 2>nul");
+
+        var batchContent = string.Join(Environment.NewLine, cleanupCommands);
+        var tempFile = Path.Combine(Path.GetTempPath(), $"wmc_cleanup_{driveLetter[0]}.bat");
+
+        try
+        {
+            File.WriteAllText(tempFile, batchContent);
+
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "cmd.exe",
+                Arguments = $"/c \"{tempFile}\"",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                WindowStyle = ProcessWindowStyle.Hidden,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                StandardOutputEncoding = System.Text.Encoding.UTF8,
+                StandardErrorEncoding = System.Text.Encoding.UTF8
+            };
+
+            using var process = new Process { StartInfo = startInfo };
+            process.Start();
+            await process.WaitForExitAsync();
+            exitCode = process.ExitCode;
+
+            progress?.Report($"Limpeza {drive} finalizada");
+        }
+        catch (Exception ex)
+        {
+            _logger.Error($"[DiskCleanupService] Erro na limpeza do disco {drive}", ex);
+            exitCode = 1;
+        }
+        finally
+        {
+            try { File.Delete(tempFile); } catch { }
+        }
+
+        return exitCode;
     }
 }

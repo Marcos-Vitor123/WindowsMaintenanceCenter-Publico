@@ -32,7 +32,7 @@ public class DeepCleanEngine
         {
             Date = startTime,
             FunctionName = "Limpeza Profunda + Imagens Antigas",
-            Command = "cleanmgr + DISM /StartComponentCleanup /ResetBase"
+            Command = "Cleanup + DISM /StartComponentCleanup /ResetBase"
         };
 
         _logger.Info("[DeepCleanEngine] Iniciando limpeza profunda");
@@ -46,25 +46,8 @@ public class DeepCleanEngine
 
         try
         {
-            progress?.Report("Configurando limpeza de disco...");
-            _diskCleanupService.ConfigureSagesetSilently();
-
-            foreach (var drive in selectedDrives)
-            {
-                progress?.Report($"Executando limpeza no disco {drive}...");
-                var exitCode = await ExecuteCommandAsync($"cleanmgr /sagerun:1 /D {drive}", progress);
-                if (exitCode != 0)
-                {
-                    progress?.Report($"Aviso: limpeza {drive} retornou código {exitCode}");
-                    _logger.Warn($"[DeepCleanEngine] Limpeza {drive} retornou código {exitCode}");
-                }
-                else
-                {
-                    progress?.Report($"Limpeza {drive} concluída");
-                    _logger.Info($"[DeepCleanEngine] Limpeza {drive} concluída");
-                }
-                lastExitCode = exitCode;
-            }
+            progress?.Report("Limpando arquivos temporários...");
+            lastExitCode = await _diskCleanupService.RunCleanupForDrivesAsync(selectedDrives, progress);
 
             progress?.Report("Executando limpeza de componentes (ResetBase)...");
             _logger.Info("[DeepCleanEngine] Executando DISM ResetBase");

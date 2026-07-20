@@ -82,7 +82,7 @@ public class SettingsViewModel : ViewModelBase
         {
             foreach (var drive in DriveInfo.GetDrives())
             {
-                if (drive.DriveType is not (DriveType.Fixed or DriveType.Removable)) continue;
+                if (drive.DriveType != DriveType.Fixed) continue;
                 if (!drive.IsReady) continue;
                 if (drive.Name.Length != 3) continue;
 

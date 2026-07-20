@@ -187,13 +187,13 @@ public class MaintenanceViewModel : ViewModelBase
                         RequiresRestart = false
                     }, progress);
 
-                    progressWindow.UpdateProgress((double)currentStep / totalSteps * 100, "Executando limpeza de disco...");
+                    progressWindow.UpdateProgress((double)currentStep / totalSteps * 100, "Limpando discos...");
                     currentStep++;
                     var config = _configService.GetConfig();
                     var drives = config.SelectedDrives?.Count > 0
                         ? config.SelectedDrives
                         : new List<string> { "C:" };
-                    var exitCode2 = await _diskCleanupService.RunCleanMgrForDrivesAsync(drives, progress);
+                    var exitCode2 = await _diskCleanupService.RunCleanupForDrivesAsync(drives, progress);
 
                     _historyService.AddEntry(new HistoryEntry
                     {
@@ -248,13 +248,13 @@ public class MaintenanceViewModel : ViewModelBase
                     break;
 
                 case "LightClean":
-                    progressWindow.UpdateProgress(0, "Executando limpeza de disco...");
+                    progressWindow.UpdateProgress(0, "Limpando discos...");
                     {
                         var lcConfig = _configService.GetConfig();
                         var lcDrives = lcConfig.SelectedDrives?.Count > 0
                             ? lcConfig.SelectedDrives
                             : new List<string> { "C:" };
-                        exitCode = await _diskCleanupService.RunCleanMgrForDrivesAsync(lcDrives, progress);
+                        exitCode = await _diskCleanupService.RunCleanupForDrivesAsync(lcDrives, progress);
                     }
                     progressWindow.UpdateProgress(50, "Executando limpeza de componentes...");
                     {
@@ -307,13 +307,13 @@ public class MaintenanceViewModel : ViewModelBase
                     progressWindow.UpdateProgress((double)currentStep / totalSteps * 100, "Executando limpeza leve...");
                     if (exitCode == 0)
                     {
-                        progressWindow.UpdateProgress((double)currentStep / totalSteps * 100, "Executando limpeza de disco...");
+                        progressWindow.UpdateProgress((double)currentStep / totalSteps * 100, "Limpando discos...");
                         {
                             var rlcConfig = _configService.GetConfig();
                             var rlcDrives = rlcConfig.SelectedDrives?.Count > 0
                                 ? rlcConfig.SelectedDrives
                                 : new List<string> { "C:" };
-                            await _diskCleanupService.RunCleanMgrForDrivesAsync(rlcDrives, progress);
+                            await _diskCleanupService.RunCleanupForDrivesAsync(rlcDrives, progress);
                         }
                         progressWindow.UpdateProgress((double)(currentStep + 1) / totalSteps * 100, "Executando limpeza de componentes...");
                         await _maintenanceEngine.RunTaskAsync(new MaintenanceTask

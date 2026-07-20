@@ -88,7 +88,7 @@ public class AutomationService
                     var dcDrives = dcConfig.SelectedDrives?.Count > 0
                         ? dcConfig.SelectedDrives
                         : new List<string> { "C:" };
-                    await _diskCleanupService.RunCleanMgrForDrivesAsync(dcDrives);
+                    await _diskCleanupService.RunCleanupForDrivesAsync(dcDrives);
                     break;
                 case "SystemRepair":
                     await _repairEngine.RunSystemRepairAsync();
