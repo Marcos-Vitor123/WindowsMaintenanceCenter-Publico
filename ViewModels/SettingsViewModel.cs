@@ -10,6 +10,7 @@ public class SettingsViewModel : ViewModelBase
     private readonly ConfigService _configService;
     private readonly NotificationService _notificationService;
     private readonly LoggingService _logger;
+    private readonly StartupManager _startupManager;
     private AppConfig _config = new();
 
     public AppConfig Config
@@ -21,11 +22,12 @@ public class SettingsViewModel : ViewModelBase
     public ICommand SaveCommand { get; }
     public ICommand ResetDefaultsCommand { get; }
 
-    public SettingsViewModel(ConfigService configService, NotificationService notificationService, LoggingService logger)
+    public SettingsViewModel(ConfigService configService, NotificationService notificationService, LoggingService logger, StartupManager startupManager)
     {
         _configService = configService;
         _notificationService = notificationService;
         _logger = logger;
+        _startupManager = startupManager;
 
         Config = CloneConfig(_configService.GetConfig());
 
@@ -40,6 +42,8 @@ public class SettingsViewModel : ViewModelBase
             var json = JsonSerializer.Serialize(Config);
             var clone = JsonSerializer.Deserialize<AppConfig>(json);
             if (clone == null) return;
+
+            var oldAutoStart = _configService.GetConfig().StartWithWindows;
 
             _configService.UpdateConfig(c =>
             {
@@ -57,6 +61,13 @@ public class SettingsViewModel : ViewModelBase
                     }
                 }
             });
+
+            if (oldAutoStart != clone.StartWithWindows)
+            {
+                _startupManager.SetAutoStart(clone.StartWithWindows);
+                _logger.Info($"[SettingsViewModel] Auto-start {(clone.StartWithWindows ? "ATIVADO" : "DESATIVADO")} no registro");
+            }
+
             _notificationService.ShowSuccess("Configurações", "Salvas com sucesso!");
             _logger.Info("[SettingsViewModel] Configurações salvas pelo usuário");
         }

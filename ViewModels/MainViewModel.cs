@@ -157,7 +157,7 @@ public class MainViewModel : ViewModelBase
                 }),
             PageType.Diagnostics => new DiagnosticsViewModel(_diagnosticService),
             PageType.Startup => new StartupViewModel(_startupManager),
-            PageType.Settings => new SettingsViewModel(_configService, _notificationService, _logger),
+            PageType.Settings => new SettingsViewModel(_configService, _notificationService, _logger, _startupManager),
             PageType.History => new HistoryViewModel(_historyService, _notificationService, _logger),
             _ => new HomeViewModel(_diagnosticService, _configService, _historyService, this)
         };

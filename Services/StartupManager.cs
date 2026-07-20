@@ -52,6 +52,30 @@ public class StartupManager
         }
     }
 
+    public void SetAutoStart(bool enabled)
+    {
+        const string appName = "WindowsMaintenanceCenter";
+        using var key = Registry.CurrentUser.OpenSubKey(RunKeyPath, true);
+        if (key == null) return;
+
+        if (enabled)
+        {
+            var exePath = Environment.ProcessPath ?? "";
+            key.SetValue(appName, $"\"{exePath}\" --minimized");
+        }
+        else
+        {
+            key.DeleteValue(appName, false);
+        }
+    }
+
+    public bool IsAutoStartEnabled()
+    {
+        const string appName = "WindowsMaintenanceCenter";
+        using var key = Registry.CurrentUser.OpenSubKey(RunKeyPath, false);
+        return key?.GetValue(appName) != null;
+    }
+
     public void Refresh() { } // Would check for new entries
 
     private List<StartupEntry> ReadRegistryKey(RegistryKey root, string keyPath, string prefix)

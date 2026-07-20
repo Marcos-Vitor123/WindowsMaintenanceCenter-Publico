@@ -1,7 +1,9 @@
 using System;
 using System.Diagnostics;
+using System.Drawing;
 using System.Windows;
 using System.Windows.Media.Animation;
+using System.Windows.Threading;
 using WindowsMaintenanceCenter.Services;
 
 namespace WindowsMaintenanceCenter.Views
@@ -10,16 +12,90 @@ namespace WindowsMaintenanceCenter.Views
     {
         private NotificationService? _notificationService;
         private System.Threading.Timer? _notificationTimer;
+        private System.Windows.Forms.NotifyIcon? _trayIcon;
+        private ConfigService? _configService;
 
         public MainWindow()
         {
             InitializeComponent();
+            SetupTrayIcon();
         }
 
         public void SetNotificationService(NotificationService notificationService)
         {
             _notificationService = notificationService;
             _notificationService.ShowNotification += OnShowNotification;
+        }
+
+        public void SetConfigService(ConfigService configService)
+        {
+            _configService = configService;
+        }
+
+        private void SetupTrayIcon()
+        {
+            var iconPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "ico.ico");
+            var icon = System.IO.File.Exists(iconPath)
+                ? new Icon(iconPath)
+                : SystemIcons.Application;
+
+            _trayIcon = new System.Windows.Forms.NotifyIcon
+            {
+                Icon = icon,
+                Text = "Windows Maintenance Center",
+                Visible = false
+            };
+
+            var menu = new System.Windows.Forms.ContextMenuStrip();
+            menu.Items.Add("Abrir", null, (_, _) => Dispatcher.Invoke(ShowFromTray));
+            menu.Items.Add("-");
+            menu.Items.Add("Sair", null, (_, _) => Dispatcher.Invoke(CloseForced));
+            _trayIcon.ContextMenuStrip = menu;
+
+            _trayIcon.DoubleClick += (_, _) => Dispatcher.Invoke(ShowFromTray);
+        }
+
+        private void ShowFromTray()
+        {
+            Show();
+            WindowState = WindowState.Normal;
+            Activate();
+            _trayIcon!.Visible = false;
+        }
+
+        public void HideToTray()
+        {
+            _trayIcon!.Visible = true;
+            Hide();
+        }
+
+        protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
+        {
+            if (_configService != null && _configService.GetConfig().MinimizeToTray)
+            {
+                e.Cancel = true;
+                HideToTray();
+                return;
+            }
+
+            CleanupTray();
+            base.OnClosing(e);
+        }
+
+        private void CloseForced()
+        {
+            CleanupTray();
+            Application.Current.Shutdown();
+        }
+
+        private void CleanupTray()
+        {
+            if (_trayIcon != null)
+            {
+                _trayIcon.Visible = false;
+                _trayIcon.Dispose();
+                _trayIcon = null;
+            }
         }
 
         private void OnShowNotification(string title, string message)
@@ -49,7 +125,7 @@ namespace WindowsMaintenanceCenter.Views
         protected override void OnSourceInitialized(EventArgs e)
         {
             base.OnSourceInitialized(e);
-            
+
             if (!IsRunAsAdministrator())
             {
                 MessageBox.Show(

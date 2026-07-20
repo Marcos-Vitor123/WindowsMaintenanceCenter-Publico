@@ -52,6 +52,7 @@ namespace WindowsMaintenanceCenter
             var mainWindow = new Views.MainWindow();
             mainWindow.DataContext = Services.GetRequiredService<MainViewModel>();
             mainWindow.SetNotificationService(Services.GetRequiredService<NotificationService>());
+            mainWindow.SetConfigService(Services.GetRequiredService<ConfigService>());
 
             var config = Services.GetRequiredService<ConfigService>().GetConfig();
 
@@ -67,6 +68,11 @@ namespace WindowsMaintenanceCenter
             }
 
             mainWindow.Show();
+
+            if (e.Args.Contains("--minimized", StringComparer.OrdinalIgnoreCase))
+            {
+                mainWindow.HideToTray();
+            }
 
             logger.Info("MainWindow exibida com sucesso");
         }
