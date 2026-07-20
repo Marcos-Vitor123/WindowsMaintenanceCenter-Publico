@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Text.Json.Serialization;
 
 namespace WindowsMaintenanceCenter.Models;
 
@@ -17,6 +18,7 @@ public class HistoryEntry : INotifyPropertyChanged
     public long SpaceFreedBytes { get; set; }
     public string? ErrorMessage { get; set; }
 
+    [JsonIgnore]
     public bool IsSelected
     {
         get => _isSelected;

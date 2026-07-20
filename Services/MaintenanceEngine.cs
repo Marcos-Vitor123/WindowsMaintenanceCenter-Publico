@@ -82,7 +82,7 @@ public class MaintenanceEngine
         var startInfo = new ProcessStartInfo
         {
             FileName = "cmd.exe",
-            Arguments = $"/c {command}",
+            Arguments = $"/c \"{command}\"",
             UseShellExecute = false,
             CreateNoWindow = true,
             RedirectStandardOutput = true,
