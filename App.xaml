@@ -24,6 +24,7 @@
             <conv:BoolToDeepCleanIconConverter x:Key="BoolToDeepCleanIconConverter"/>
             <conv:TaskIdToColorConverter x:Key="TaskIdToColorConverter"/>
             <conv:CountToVisibilityConverter x:Key="CountToVisibilityConverter"/>
+            <conv:HexToBrushConverter x:Key="HexToBrushConverter"/>
             <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
 
             <DropShadowEffect x:Key="CardShadow" 

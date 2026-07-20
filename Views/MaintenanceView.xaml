@@ -27,7 +27,13 @@
                                 <TextBlock Text="{Binding Name}" FontSize="16" FontWeight="Bold" 
                                            Foreground="#2c3e50" TextAlignment="Center" TextWrapping="Wrap" Margin="0,0,0,8"/>
                                 <TextBlock Text="{Binding Description}" FontSize="11" Foreground="#7f8c8d" 
-                                           TextAlignment="Center" TextWrapping="Wrap" Margin="0,0,0,15"/>
+                                           TextAlignment="Center" TextWrapping="Wrap" Margin="0,0,0,12"/>
+
+                                <Border Background="{Binding FrequencyColor, Converter={StaticResource HexToBrushConverter}}" CornerRadius="10" 
+                                        Padding="10,4" HorizontalAlignment="Center" Margin="0,0,0,12">
+                                    <TextBlock Text="{Binding Frequency}" FontSize="10" FontWeight="SemiBold" 
+                                               Foreground="White" HorizontalAlignment="Center"/>
+                                </Border>
                                 
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                     <TextBlock Text="{Binding RequiresRestart, Converter={StaticResource BoolToRestartIconConverter}}" 

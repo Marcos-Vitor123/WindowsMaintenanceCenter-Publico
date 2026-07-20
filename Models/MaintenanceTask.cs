@@ -9,4 +9,6 @@ public class MaintenanceTask
     public bool RequiresRestart { get; set; }
     public string Icon { get; set; } = string.Empty;
     public bool IsDeepClean { get; set; }
+    public string Frequency { get; set; } = string.Empty;
+    public string FrequencyColor { get; set; } = "#3498db";
 }

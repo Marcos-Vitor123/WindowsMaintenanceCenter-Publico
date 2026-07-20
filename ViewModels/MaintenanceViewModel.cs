@@ -68,7 +68,9 @@ public class MaintenanceViewModel : ViewModelBase
             Command = "",
             RequiresRestart = false,
             Icon = "⭐",
-            IsDeepClean = false
+            IsDeepClean = false,
+            Frequency = "Diário",
+            FrequencyColor = "#27ae60"
         });
 
         Tasks.Add(new MaintenanceTask
@@ -79,7 +81,9 @@ public class MaintenanceViewModel : ViewModelBase
             Command = "",
             RequiresRestart = true,
             Icon = "🔧",
-            IsDeepClean = false
+            IsDeepClean = false,
+            Frequency = "A cada 30 dias",
+            FrequencyColor = "#8e44ad"
         });
 
         Tasks.Add(new MaintenanceTask
@@ -90,7 +94,9 @@ public class MaintenanceViewModel : ViewModelBase
             Command = "",
             RequiresRestart = false,
             Icon = "🧹",
-            IsDeepClean = false
+            IsDeepClean = false,
+            Frequency = "A cada 3 dias",
+            FrequencyColor = "#2980b9"
         });
 
         Tasks.Add(new MaintenanceTask
@@ -101,7 +107,9 @@ public class MaintenanceViewModel : ViewModelBase
             Command = "",
             RequiresRestart = true,
             Icon = "🚀",
-            IsDeepClean = true
+            IsDeepClean = true,
+            Frequency = "A cada 7 dias",
+            FrequencyColor = "#e67e22"
         });
 
         Tasks.Add(new MaintenanceTask
@@ -112,7 +120,9 @@ public class MaintenanceViewModel : ViewModelBase
             Command = "",
             RequiresRestart = true,
             Icon = "🛠",
-            IsDeepClean = false
+            IsDeepClean = false,
+            Frequency = "A cada 30 dias",
+            FrequencyColor = "#8e44ad"
         });
 
         Tasks.Add(new MaintenanceTask
@@ -123,7 +133,9 @@ public class MaintenanceViewModel : ViewModelBase
             Command = "",
             RequiresRestart = true,
             Icon = "⚡",
-            IsDeepClean = true
+            IsDeepClean = true,
+            Frequency = "A cada 30 dias",
+            FrequencyColor = "#8e44ad"
         });
     }
 
