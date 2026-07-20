@@ -59,7 +59,17 @@ public class MaintenanceViewModel : ViewModelBase
     private void LoadTasks()
     {
         Tasks.Clear();
-        
+
+        var config = _configService.GetConfig();
+        var schedules = config.TaskSchedules;
+
+        var daily = GetFrequencyInfo(schedules, new[] { "TempFiles", "DiskCleanup" }, true);
+        var systemRepair = GetFrequencyInfo(schedules, new[] { "SystemRepair" }, false);
+        var lightClean = GetFrequencyInfo(schedules, new[] { "DiskCleanup" }, false);
+        var deepClean = GetFrequencyInfo(schedules, new[] { "DiskCleanup" }, false);
+        var repairLight = GetFrequencyInfo(schedules, new[] { "SystemRepair", "DiskCleanup" }, false);
+        var fullRepair = GetFrequencyInfo(schedules, new[] { "SystemRepair", "DiskCleanup" }, false);
+
         Tasks.Add(new MaintenanceTask
         {
             Id = "DailyOptimization",
@@ -69,8 +79,8 @@ public class MaintenanceViewModel : ViewModelBase
             RequiresRestart = false,
             Icon = "⭐",
             IsDeepClean = false,
-            Frequency = "Diário",
-            FrequencyColor = "#27ae60"
+            Frequency = daily.Text,
+            FrequencyColor = daily.Color
         });
 
         Tasks.Add(new MaintenanceTask
@@ -82,8 +92,8 @@ public class MaintenanceViewModel : ViewModelBase
             RequiresRestart = true,
             Icon = "🔧",
             IsDeepClean = false,
-            Frequency = "A cada 30 dias",
-            FrequencyColor = "#8e44ad"
+            Frequency = systemRepair.Text,
+            FrequencyColor = systemRepair.Color
         });
 
         Tasks.Add(new MaintenanceTask
@@ -95,8 +105,8 @@ public class MaintenanceViewModel : ViewModelBase
             RequiresRestart = false,
             Icon = "🧹",
             IsDeepClean = false,
-            Frequency = "A cada 3 dias",
-            FrequencyColor = "#2980b9"
+            Frequency = lightClean.Text,
+            FrequencyColor = lightClean.Color
         });
 
         Tasks.Add(new MaintenanceTask
@@ -108,8 +118,8 @@ public class MaintenanceViewModel : ViewModelBase
             RequiresRestart = true,
             Icon = "🚀",
             IsDeepClean = true,
-            Frequency = "A cada 7 dias",
-            FrequencyColor = "#e67e22"
+            Frequency = deepClean.Text,
+            FrequencyColor = deepClean.Color
         });
 
         Tasks.Add(new MaintenanceTask
@@ -121,8 +131,8 @@ public class MaintenanceViewModel : ViewModelBase
             RequiresRestart = true,
             Icon = "🛠",
             IsDeepClean = false,
-            Frequency = "A cada 30 dias",
-            FrequencyColor = "#8e44ad"
+            Frequency = repairLight.Text,
+            FrequencyColor = repairLight.Color
         });
 
         Tasks.Add(new MaintenanceTask
@@ -134,10 +144,40 @@ public class MaintenanceViewModel : ViewModelBase
             RequiresRestart = true,
             Icon = "⚡",
             IsDeepClean = true,
-            Frequency = "A cada 30 dias",
-            FrequencyColor = "#8e44ad"
+            Frequency = fullRepair.Text,
+            FrequencyColor = fullRepair.Color
         });
     }
+
+    private static (string Text, string Color) GetFrequencyInfo(
+        Dictionary<string, TaskSchedule> schedules, string[] keys, bool useMin)
+    {
+        var enabled = keys
+            .Where(k => schedules.ContainsKey(k) && schedules[k].Enabled)
+            .Select(k => schedules[k].IntervalDays)
+            .ToList();
+
+        if (enabled.Count == 0)
+            return ("Configurar", "#95a5a6");
+
+        int days = useMin ? enabled.Min() : enabled.Max();
+        return (FormatFrequency(days), FrequencyColor(days));
+    }
+
+    private static string FormatFrequency(int days) => days switch
+    {
+        1 => "Diário",
+        2 => "A cada 2 dias",
+        _ => $"A cada {days} dias"
+    };
+
+    private static string FrequencyColor(int days) => days switch
+    {
+        1 => "#27ae60",
+        <= 3 => "#2980b9",
+        <= 14 => "#e67e22",
+        _ => "#8e44ad"
+    };
 
     private void UpdateStatus(string text, int progress = 0, bool isRunning = true, bool isIndeterminate = true)
     {
