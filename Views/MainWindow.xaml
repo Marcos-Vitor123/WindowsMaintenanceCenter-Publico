@@ -7,15 +7,15 @@
         xmlns:vm="clr-namespace:WindowsMaintenanceCenter.ViewModels"
         mc:Ignorable="d"
         Title="Windows Maintenance Center"
-        Height="550" Width="800"
-        MinHeight="500" MinWidth="700"
+        Height="550" Width="850"
+        MinHeight="500" MinWidth="750"
         WindowStartupLocation="CenterScreen"
         Icon="pack://application:,,,/Assets/ico.ico"
         Background="#f0f0f0">
     
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="240"/>
+            <ColumnDefinition Width="200"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 

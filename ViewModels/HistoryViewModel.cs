@@ -39,15 +39,25 @@ public class HistoryViewModel : ViewModelBase
 
     private void LoadEntries()
     {
+        foreach (var entry in Entries)
+            entry.PropertyChanged -= OnEntryPropertyChanged;
+
         Entries.Clear();
         var items = _historyService.Entries;
         _logger.Info($"[HistoryViewModel] LoadEntries: {items.Count} entradas encontradas no HistoryService");
         foreach (var entry in items)
         {
+            entry.PropertyChanged += OnEntryPropertyChanged;
             Entries.Add(entry);
             _logger.Info($"[HistoryViewModel]   -> Id={entry.Id} Nome={entry.FunctionName} Sucesso={entry.Success}");
         }
         _logger.Info($"[HistoryViewModel] Entries ObservableCollection agora tem {Entries.Count} itens");
+    }
+
+    private void OnEntryPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(HistoryEntry.IsSelected))
+            ((RelayCommand)DeleteSelectedCommand).RaiseCanExecuteChanged();
     }
 
     private void DeleteEntry(HistoryEntry? entry)
@@ -79,6 +89,7 @@ public class HistoryViewModel : ViewModelBase
         var deleted = _historyService.DeleteEntry(entry.Id);
         _logger.Info($"[HistoryViewModel] HistoryService.DeleteEntry({entry.Id}) retornou {deleted}");
 
+        entry.PropertyChanged -= OnEntryPropertyChanged;
         var removed = Entries.Remove(entry);
         _logger.Info($"[HistoryViewModel] Entries.Remove(entry) retornou {removed}, Entries.Count agora é {Entries.Count}");
 
@@ -102,6 +113,7 @@ public class HistoryViewModel : ViewModelBase
         _logger.Info($"[HistoryViewModel] Excluindo {selected.Count} registros selecionados");
         foreach (var entry in selected)
         {
+            entry.PropertyChanged -= OnEntryPropertyChanged;
             _historyService.DeleteEntry(entry.Id);
             Entries.Remove(entry);
         }
@@ -114,6 +126,8 @@ public class HistoryViewModel : ViewModelBase
     private void Clear()
     {
         _logger.Info("[HistoryViewModel] Limpar todo o histórico");
+        foreach (var entry in Entries)
+            entry.PropertyChanged -= OnEntryPropertyChanged;
         _historyService.Clear();
         LoadEntries();
     }
