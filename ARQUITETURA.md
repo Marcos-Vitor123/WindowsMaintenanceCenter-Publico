@@ -47,6 +47,7 @@ O WMC utiliza o padrão **MVVM (Model-View-ViewModel)** com **Dependency Injecti
 │  │  │ StartupManager    │  │ AutomationService              │  │ │
 │  │  │ ConfigService     │  │ HistoryService                 │  │ │
 │  │  │ NotificationSvc   │  │ SoundService                   │  │ │
+│  │  │ LoggingService    │  │                                │  │ │
 │  │  └──────────────────┘  └────────────────────────────────┘  │ │
 │  └─────────────────────────────┬───────────────────────────────┘ │
 │                                │                                 │
@@ -95,17 +96,20 @@ O container de DI é configurado em `App.xaml.cs`:
 ```csharp
 // Registro como Singleton (estado compartilhado)
 services.AddSingleton<ConfigService>();
+services.AddSingleton<ILogger>(sp => sp.GetRequiredService<ConfigService>());
 services.AddSingleton<HistoryService>();
 services.AddSingleton<NotificationService>();
 services.AddSingleton<SoundService>();
 services.AddSingleton<AutomationService>();
+services.AddSingleton<LoggingService>();
+services.AddSingleton<MaintenanceEngine>();
+services.AddSingleton<SystemRepairEngine>();
+services.AddSingleton<DeepCleanEngine>();
+services.AddSingleton<DiagnosticService>();
+services.AddSingleton<StartupManager>();
 
 // Registro como Transient (nova instância por resolved)
-services.AddTransient<MaintenanceEngine>();
-services.AddTransient<SystemRepairEngine>();
-services.AddTransient<DeepCleanEngine>();
-services.AddTransient<DiagnosticService>();
-services.AddTransient<StartupManager>();
+services.AddTransient<MainViewModel>();
 ```
 
 ### 2.3 Command Pattern
@@ -230,8 +234,8 @@ AutomationService (timer a cada 1h)
 
 | Modelo | Arquivo | Descrição |
 |--------|---------|-----------|
-| `AppConfig` | `Models/AppConfig.cs` | Configurações do usuário: StartWithWindows, AutoMode, TaskSchedules |
-| `HistoryEntry` | `Models/HistoryEntry.cs` | Registro de operação: data, função, duração, sucesso, espaço liberado |
+| `AppConfig` | `Models/AppConfig.cs` | Configurações do usuário: StartWithWindows, MinimizeToTray, OpenCentered, ShowNotifications, AutoMode, TaskSchedules |
+| `HistoryEntry` | `Models/HistoryEntry.cs` | Registro de operação: data, função, duração, sucesso, espaço liberado; `IsSelected` com INotifyPropertyChanged e `[JsonIgnore]` |
 | `MaintenanceTask` | `Models/MaintenanceTask.cs` | Definição de tarefa: id, nome, comando, requerRestart, isDeepClean |
 | `StartupEntry` | `Models/StartupEntry.cs` | Programa de inicialização: nome, publisher, impacto, habilitado, caminho registro |
 | `SystemInfo` | `Models/SystemInfo.cs` | Info do sistema: versão Windows, RAM, disco, status |
@@ -241,15 +245,16 @@ AutomationService (timer a cada 1h)
 | Serviço | Tipo | Responsabilidade |
 |---------|------|------------------|
 | `ILogger` | Interface | Contrato para serviços de log |
-| `MaintenanceEngine` | Engine | Executa comandos via `cmd.exe /c`, redireciona stdout/stderr |
-| `SystemRepairEngine` | Engine | Pipeline: DISM CheckHealth → ScanHealth → RestoreHealth → SFC ScanNow → CHKDSK |
-| `DeepCleanEngine` | Engine | cleanmgr /sageset:1 + cleanmgr /sagerun:1 + DISM StartComponentCleanup /ResetBase |
+| `LoggingService` | Service | Logging centralizado com timestamps em arquivos diários (`Logs/log_YYYYMMDD.txt`); thread-safe |
+| `MaintenanceEngine` | Engine | Executa comandos via `cmd.exe /c "{command}"`, redireciona stdout/stderr; exit code 0 ou 1 = sucesso |
+| `SystemRepairEngine` | Engine | Pipeline: DISM CheckHealth → ScanHealth → RestoreHealth → SFC ScanNow → CHKDSK; Encoding.UTF8 |
+| `DeepCleanEngine` | Engine | cleanmgr /sageset:1 + cleanmgr /sagerun:1 + DISM StartComponentCleanup /ResetBase; Encoding.UTF8 |
 | `DiagnosticService` | Service | Coleta info via WMI (Win32_OperatingSystem, Win32_ComputerSystem) + DriveInfo |
-| `StartupManager` | Service | Lê/escreve Registry HKLM/HKCU Run; desativa renomeando com prefixo `_disabled_` |
+| `StartupManager` | Service | Lê/escreve Registry HKLM/HKCU Run; desativa renomeando com prefixo `_disabled_`; auto-start do WMC via HKCU |
 | `AutomationService` | Service | Timer periódico que verifica e executa tarefas atrasadas (modo automático) |
-| `ConfigService` | Service + ILogger | Persiste config em JSON; implementa logging para arquivos diários |
+| `ConfigService` | Service + ILogger | Persiste config em JSON; atomic writes via temp file; implementa logging para arquivos diários |
 | `HistoryService` | Service + ILogger | Persiste histórico em JSON (max 1000 entradas); thread-safe com locks |
-| `NotificationService` | Service | Event-based dispatcher para notificações de UI |
+| `NotificationService` | Service | Event-based dispatcher para notificações toast de UI |
 | `SoundService` | Service | Toca SystemSounds: Asterisk, Exclamation, Hand |
 
 ### 4.3 ViewModels (8 classes)
@@ -369,9 +374,10 @@ registryKey.DeleteValue(originalValueName, false);
 | **Runtime** | .NET | 10.0 |
 | **Linguagem** | C# | Latest (file-scoped namespaces, nullable) |
 | **UI Framework** | WPF | .NET 10 |
-| **DI Container** | Microsoft.Extensions.DependencyInjection | 9.0.0 |
+| **DI Container** | Microsoft.Extensions.DependencyInjection | 10.0.10 |
 | **WPF Behaviors** | Microsoft.Xaml.Behaviors.Wpf | 1.1.142 |
 | **System Management** | System.Management (WMI) | 10.0.10 |
+| **WinForms (NotifyIcon)** | System.Windows.Forms (FrameworkReference) | .NET 10 built-in |
 | **Serialização** | System.Text.Json | Built-in |
 | **Registry API** | Microsoft.Win32.Registry | Built-in |
 
@@ -379,9 +385,13 @@ registryKey.DeleteValue(originalValueName, false);
 
 ```xml
 <ItemGroup>
-  <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
+  <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.10" />
   <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.142" />
   <PackageReference Include="System.Management" Version="10.0.10" />
+</ItemGroup>
+
+<ItemGroup>
+  <FrameworkReference Include="Microsoft.WindowsDesktop.App.WindowsForms" />
 </ItemGroup>
 ```
 
@@ -439,6 +449,9 @@ public async Task<SystemInfo> GetSystemInfoAsync()
     <UseWPF>true</UseWPF>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>false</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
   </PropertyGroup>
 </Project>
 ```
@@ -452,11 +465,8 @@ dotnet build
 # Release
 dotnet build -c Release
 
-# Publicação auto-contida (sem .NET Runtime necessário)
-dotnet publish -c Release -r win-x64 --self-contained
-
-# Publicação dependente do Runtime
-dotnet publish -c Release -r win-x64 --no-self-contained
+# Publicação dependente do Runtime (recomendado, ~1 MB)
+dotnet publish -c Release -r win-x64 --self-contained false
 ```
 
 ---
@@ -465,15 +475,27 @@ dotnet publish -c Release -r win-x64 --no-self-contained
 
 | Prioridade | Melhoria | Descrição |
 |------------|----------|-----------|
-| Alta | Unit Tests | Criar projeto de testes com xUnit ou NUnit |
+| ~~Alta~~ | ~~Unit Tests~~ | ~~Criar projeto de testes com xUnit ou NUnit~~ (futuro) |
 | Alta | Consolidar Converters | Remover duplicação entre `Converters.cs` raiz e `Views/Converters.cs` |
-| Alta | Remover MainWindow duplicado | Deletar `MainWindow.xaml` raiz (scaffold leftover) |
+| ~~Alta~~ | ~~Remover MainWindow duplicado~~ | ~~Deletar `MainWindow.xaml` raiz~~ (scaffold leftover) |
 | Média | Medição real de espaço | Calcular espaço antes/depois em vez de estimativas hardcoded |
 | Média | Re-enabling de Startup | Armazenar valor original ao desativar para reativação correta |
 | Média | Logging estruturado | Migrar para Serilog ou extensions logging |
 | Baixa | Internacionalização | Suporte a múltiplos idiomas (PT/EN) |
 | Baixa | Tema escuro | Implementar tema dark mode |
 | Baixa | Auto-update | Verificação automática de atualizações |
+
+### Funcionalidades Implementadas (v1.1.0)
+
+- Bandeja do sistema (NotifyIcon com menu contextual)
+- Auto-start com Windows (registro HKCU com --minimized)
+- Logging centralizado (LoggingService com arquivos diários)
+- Toast notifications
+- Barra de progresso
+- Feedback sonoro
+- Checkboxes no histórico com exclusão seletiva
+- Sidebar 200px, janela 850px
+- Configurações persistidas com atomic writes
 
 ---
 

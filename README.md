@@ -30,6 +30,7 @@ O WMC foi criado para fornecer aos usuários Windows uma ferramenta centralizada
 - **Diagnosticar o estado do sistema** com informações detalhadas via WMI
 - **Gerenciar programas de inicialização** diretamente pelo registro do Windows
 - **Agendar manutenções automáticas** sem intervenção do usuário
+- **Minimizar para a bandeja do sistema** e iniciar automaticamente com o Windows
 
 ---
 
@@ -72,7 +73,17 @@ O WMC foi criado para fornecer aos usuários Windows uma ferramenta centralizada
 | **Diagnóstico** | Informações detalhadas do sistema: versão Windows, RAM, disco, recomendações inteligentes |
 | **Inicialização** | Gerenciador de programas que iniciam com o Windows (ativação/desativação via Registro) |
 | **Configurações** | Configurações gerais, modo de operação (Assistido/Automático) e frequência de tarefas |
-| **Histórico** | Log completo de todas as operações com data, duração, resultado e espaço liberado |
+| **Histórico** | Log completo de todas as operações com data, duração, resultado, espaço liberado e exclusão seletiva via checkboxes |
+
+### Bandeja do Sistema e Auto-Start
+
+| Funcionalidade | Descrição |
+|----------------|-----------|
+| **Minimizar para bandeja** | Ao clicar no X, o programa minimiza para a bandeja do sistema (ícone ao lado do relógio) |
+| **Restaurar da bandeja** | Duplo-clique no ícone da bandeja restaura a janela |
+| **Menu da bandeja** | Botão direito no ícone: "Abrir" ou "Sair" |
+| **Iniciar com Windows** | Configuração na aba Configurações para iniciar automaticamente no login do Windows (via registro HKCU) |
+| **Auto-start minimizado** | Ao iniciar com o Windows, abre diretamente na bandeja (minimizado) |
 
 ### Tarefas de Manutenção
 
@@ -87,18 +98,19 @@ O WMC foi criado para fornecer aos usuários Windows uma ferramenta centralizada
 
 ### Arquitetura Back-end
 
-O projeto conta com **10 serviços** especializados que executam as operações de sistema:
+O projeto conta com **11 serviços** especializados que executam as operações de sistema:
 
 - **MaintenanceEngine** - Executor genérico de comandos de manutenção via `cmd.exe`
 - **SystemRepairEngine** - Pipeline completo de reparo (DISM + SFC + CHKDSK)
 - **DeepCleanEngine** - Motor de limpeza profunda com cleanmgr e DISM ResetBase
 - **DiagnosticService** - Coleta de informações do sistema via WMI (Win32_OperatingSystem, Win32_ComputerSystem)
-- **StartupManager** - Gerenciamento de programas de inicialização via Registro (HKLM/HKCU Run)
+- **StartupManager** - Gerenciamento de programas de inicialização via Registro (HKLM/HKCU Run) + auto-start do WMC
 - **AutomationService** - Timer para execução automática de tarefas agendadas
 - **ConfigService** - Persistência de configurações em JSON (`Config/configuracoes.json`)
 - **HistoryService** - Persistência de histórico de operações em JSON (`Logs/historico.json`)
-- **NotificationService** - Sistema de notificações para o usuário
+- **NotificationService** - Sistema de notificações para o usuário (toast)
 - **SoundService** - Feedback sonoro via SystemSounds do Windows
+- **LoggingService** - Logging centralizado em arquivos diários (`Logs/log_YYYYMMDD.txt`)
 
 ### Sons do Sistema
 
@@ -137,11 +149,13 @@ dotnet build
 dotnet run
 ```
 
-### Publicação auto-contida
+### Publicação dependente do Runtime (recomendado)
 
 ```bash
-dotnet publish -c Release -r win-x64 --self-contained
+dotnet publish -c Release -r win-x64 --self-contained false
 ```
+
+O executável é gerado em `bin\Release\net10.0-windows\win-x64\publish\WindowsMaintenanceCenter.exe` (~1 MB).
 
 ---
 
@@ -149,49 +163,53 @@ dotnet publish -c Release -r win-x64 --self-contained
 
 ```
 WindowsMaintenanceCenter/
-├── App.xaml / App.xaml.cs              # Ponto de entrada, container DI
+├── App.xaml / App.xaml.cs              # Ponto de entrada, container DI, --minimized handler
 ├── MainWindow.xaml / .cs               # (Não utilizado - scaffold leftover)
 ├── Converters.cs                       # Value converters para data binding
 ├── docs/img/                           # Screenshots do programa
 │
+├── Assets/
+│   └── ico.ico                         # Ícone do aplicativo (bandeja + janela)
+│
 ├── Models/                             # Modelos de dados
-│   ├── AppConfig.cs                    # Configurações do usuário
-│   ├── HistoryEntry.cs                 # Entrada de log de operação
+│   ├── AppConfig.cs                    # Configurações do usuário (StartWithWindows, MinimizeToTray, etc.)
+│   ├── HistoryEntry.cs                 # Entrada de log de operação (INotifyPropertyChanged, JsonIgnore)
 │   ├── MaintenanceTask.cs             # Definição de tarefa
 │   ├── StartupEntry.cs                # Programa de inicialização
 │   └── SystemInfo.cs                  # Informações do sistema
 │
-├── Services/                           # Lógica de negócio
+├── Services/                           # Lógica de negócio (11 serviços)
 │   ├── ILogger.cs                      # Interface de log
-│   ├── MaintenanceEngine.cs            # Executor de comandos
-│   ├── SystemRepairEngine.cs           # Reparo DISM/SFC/CHKDSK
-│   ├── DeepCleanEngine.cs              # Limpeza profunda
+│   ├── LoggingService.cs              # Logging centralizado em arquivos diários
+│   ├── MaintenanceEngine.cs            # Executor de comandos via cmd.exe /c "{command}"
+│   ├── SystemRepairEngine.cs           # Reparo DISM/SFC/CHKDSK (Encoding.UTF8)
+│   ├── DeepCleanEngine.cs              # Limpeza profunda (Encoding.UTF8)
 │   ├── DiagnosticService.cs            # Diagnóstico WMI
-│   ├── StartupManager.cs              # Gerenciador de inicialização
+│   ├── StartupManager.cs              # Gerenciador de inicialização + auto-start do WMC
 │   ├── AutomationService.cs            # Automação por timer
-│   ├── ConfigService.cs               # Persistência de config
+│   ├── ConfigService.cs               # Persistência de config (atomic writes)
 │   ├── HistoryService.cs              # Persistência de histórico
-│   ├── NotificationService.cs          # Notificações
+│   ├── NotificationService.cs          # Notificações toast
 │   └── SoundService.cs                # Sons do sistema
 │
 ├── ViewModels/                         # ViewModels MVVM
 │   ├── ViewModelBase.cs               # Base INotifyPropertyChanged
-│   ├── MainViewModel.cs               # Shell e navegação
+│   ├── MainViewModel.cs               # Shell, navegação, RelayCommand<T> e RelayCommand
 │   ├── HomeViewModel.cs               # Dashboard
 │   ├── MaintenanceViewModel.cs         # Tarefas de manutenção
 │   ├── DiagnosticsViewModel.cs         # Diagnóstico
 │   ├── StartupViewModel.cs            # Programas de inicialização
-│   ├── SettingsViewModel.cs           # Configurações
-│   └── HistoryViewModel.cs            # Histórico
+│   ├── SettingsViewModel.cs           # Configurações (aplica auto-start ao salvar)
+│   └── HistoryViewModel.cs            # Histórico com checkboxes e exclusão seletiva
 │
 ├── Views/                              # Interface WPF
-│   ├── MainWindow.xaml / .cs           # Janela principal (shell)
+│   ├── MainWindow.xaml / .cs           # Janela principal (sidebar, NotifyIcon, tray)
 │   ├── HomeView.xaml / .cs             # Página inicial
 │   ├── MaintenanceView.xaml / .cs      # Página de manutenção
 │   ├── DiagnosticsView.xaml / .cs      # Página de diagnóstico
 │   ├── StartupView.xaml / .cs          # Página de inicialização
 │   ├── SettingsView.xaml / .cs         # Página de configurações
-│   ├── HistoryView.xaml / .cs          # Página de histórico
+│   ├── HistoryView.xaml / .cs          # Página de histórico (checkboxes + Excluir Selecionados)
 │   └── Converters.cs                  # Converters da Views
 │
 ├── Resources/
@@ -213,13 +231,18 @@ WindowsMaintenanceCenter/
 |---------|----------------|-----------------|
 | **Arquitetura** | Monolítica | MVVM + Dependency Injection |
 | **Interface** | Tkinter básica | WPF moderno estilo Windows 11 |
-| **Navegação** | 5 botões | 6 abas com sidebar |
+| **Navegação** | 5 botões | 6 abas com sidebar (200px) |
 | **Persistência** | Nenhuma | JSON (config + histórico) |
+| **Bandeja do sistema** | Não | Sim (NotifyIcon com menu contextual) |
+| **Auto-start** | Não | Sim (registro HKCU com --minimized) |
 | **Gerenciador de inicialização** | Não | Sim (Registro Windows) |
 | **Modo automático** | Não | Sim (agendamento por tarefa) |
+| **Logging** | Não | Sim (arquivos diários com timestamps) |
 | **Diagnóstico** | Básico | WMI (Win32_OperatingSystem, Win32_ComputerSystem) |
 | **Sons** | Sim | Sim (SystemSounds) |
 | **Reparo de sistema** | Parcial | Pipeline completo (DISM + SFC + CHKDSK) |
+| **Feedback visual** | Nenhum | Toast notifications + barra de progresso |
+| **Exclusão seletiva** | Não | Sim (checkboxes no histórico) |
 
 ---
 
